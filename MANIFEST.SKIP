@@ -9,4 +9,6 @@ pm_to_blib
 MANIFEST.SKIP
 .cvsignore
 .releaserc
-cpan-*
+cpan-.*
+.lwpcookies
+

@@ -1,7 +1,8 @@
 Changes
+Changes.bak
 MANIFEST			This list of files
 Makefile.PL
+cpan
 t/compile.t
 t/pod.t
 t/test_manifest
-cpan
