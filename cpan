@@ -12,7 +12,7 @@ cpan - easily interact with CPAN from the command line
 	cpan module_name [ module_name ... ]
 
 	# with switches, installs modules with extra behavior
-	cpan [-cimt] module_name [ module_name ... ]
+	cpan [-cfimt] module_name [ module_name ... ]
 
 	# without arguments, starts CPAN shell
 	cpan
@@ -62,6 +62,10 @@ them in alphabetical order.
 
 Runs a `make clean` in the specified module's directories.
 
+=item f
+
+Forces the specified action, when it normally would have failed.
+
 =item i
 
 Installed the specified modules.
@@ -90,8 +94,11 @@ Runs a `make test` on the specified modules.
 	# recompile modules
 	cpan -r
 
-	# install modules
+	# install modules ( sole -i is optional )
 	cpan -i Netscape::Booksmarks Business::ISBN
+
+	# force install modules ( must use -i )
+	cpan -fi CGI::Minimal URI
 
 =head1 TO DO
 
@@ -107,9 +114,29 @@ autobundle, clean, make, recompile, test
 Most behaviour, including environment variables and configuration,
 comes directly from CPAN.pm.
 
+=head1 SOURCE AVAILABILITY
+
+This source is part of a SourceForge project which always has the
+latest sources in CVS, as well as all of the previous releases.
+
+	http://sourceforge.net/projects/brian-d-foy/
+
+If, for some reason, I disappear from the world, one of the other
+members of the project can shepherd this module appropriately.
+
+=head1 CREDITS
+
+Japheth Cleaver added the bits to allow a forced install (-f).
+
 =head1 AUTHOR
 
 brian d foy <bdfoy@cpan.org>
+
+=head1 COPYRIGHT
+
+Copyright (c) 2001-2004, brian d foy, All Rights Reserved.
+
+You may redistribute this under the same terms as Perl itself.
 
 =cut
 
@@ -126,6 +153,7 @@ my $META_OPTIONS = 'ahvr';
 my %CPAN_METHODS = (
 	$Default => 'install',
 	'c'      => 'clean',
+	'f'      => 'force',
 	'i'      => 'install',
 	'm'      => 'make',
 	't'      => 'test',
@@ -181,6 +209,7 @@ else
 
 	foreach my $option ( @cpan_options )
 		{
+		next if $option eq 'f';
 		next unless $options{$option};
 		$switch = $option;
 		last;
@@ -196,7 +225,14 @@ else
 
 	foreach my $arg ( @ARGV )
 		{
-		CPAN::Shell->$method( $arg );
+		if( $options{f} )
+			{
+			CPAN::Shell->force( $method, $arg );
+			}
+		else
+			{
+			CPAN::Shell->$method( $arg );
+			}
 		}
 	}
 
