@@ -16,7 +16,7 @@ unless( $@ )
 
 WriteMakefile(
     'NAME'		    => 'cpan',
-	'VERSION'       => '1.3',
+	'VERSION'       => '1.4',
 	
 	'EXE_FILES' =>  [ 'cpan' ],
 	    	
