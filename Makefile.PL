@@ -18,6 +18,7 @@ WriteMakefile(
 	    	
 	'PREREQ_PM' => {
 		'File::Find::Rule'  => '0',
+		'Test::File'        => '0',
 		'Test::Manifest'    => '0.91',
 		'Test::More'        => '0',
 		'Test::Pod'         => '0.90',
