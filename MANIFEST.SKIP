@@ -11,4 +11,6 @@ MANIFEST.SKIP
 .releaserc
 cpan-.*
 .lwpcookies
+*.bak
+*.old
 
