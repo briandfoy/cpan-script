@@ -1,0 +1,6 @@
+.lwpcookies
+cpan-*
+blib
+Makefile
+pm_to_blib
+.DS_Store
