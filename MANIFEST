@@ -1,0 +1,7 @@
+Changes
+MANIFEST			This list of files
+Makefile.PL
+t/compile.t
+t/pod.t
+t/test_manifest
+cpan
