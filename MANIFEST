@@ -5,4 +5,5 @@ META.yml
 cpan
 t/compile.t
 t/pod.t
+t/pod_coverage.t
 t/test_manifest
