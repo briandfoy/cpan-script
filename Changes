@@ -1,5 +1,13 @@
 $Id$
 
+1.5 - Fri Dec 23 16:59:18 2005
+
+	* No need to upgrade unless you want the new features
+	* Read the Change files with -C
+	* List the authors with -A
+	* List extended module details with -D
+	* List all modules for authors with -L
+
 1.4 - Tue Jul  6 00:36:51 2004
 * added -f option to permit a "force install"
 * removed File::Find::Rule and Test::File prereqs
