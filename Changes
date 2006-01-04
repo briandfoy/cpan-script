@@ -1,5 +1,12 @@
 $Id$
 
+1.05 - Wed Jan  4 14:12:03 2006
+	* The -i default behavior disappeared (by mistake) with the
+	re-write in the last version. This version fixes RT 16915
+	that reports that bug.
+	* All users of cpan-1.05 (the script, not the CPAN.pm distro version)
+	should upgrade. You can check your cpan(1) version with `cpan -v`
+
 1.5 - Fri Dec 23 16:59:18 2005
 
 	* No need to upgrade unless you want the new features
