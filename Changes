@@ -1,10 +1,5 @@
 $Id$
 
-1.05 - Wed Jan 11 00:22:49 2006
-	* Fixed up the version number so it gets onto CPAN. Otherwise, it's
-	the same as the previous version (1.06) which had a version
-	number less than the version before that (1.5)
-
 1.6 - Wed Jan  4 14:12:03 2006
 	* The -i default behavior disappeared (by mistake) with the
 	re-write in the last version. This version fixes RT 16915
