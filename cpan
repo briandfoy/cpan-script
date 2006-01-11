@@ -168,7 +168,7 @@ use CPAN ();
 use Getopt::Std;
 
 my $VERSION =
-	sprintf "%d.%02d", q$Revision$ =~ m/ (\d+) \. (\d+) /xg;
+	sprintf "%d.%d", q$Revision$ =~ m/ (\d+) \. (\d+) /xg;
 
 if( 0 == @ARGV ) { CPAN::shell(); exit 0 }
 
