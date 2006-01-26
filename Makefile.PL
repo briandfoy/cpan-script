@@ -4,8 +4,8 @@ use ExtUtils::MakeMaker;
 eval "use Test::Manifest 1.14";
 
 WriteMakefile(
-    'NAME'		    => 'cpan',
-	'VERSION'       => '1.51',
+    'NAME'		    => 'cpan-script',
+	'VERSION'       => '1.52',
 	
 	'EXE_FILES' =>  [ 'cpan' ],
 	    	
