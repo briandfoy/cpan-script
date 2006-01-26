@@ -1,5 +1,12 @@
 $Id$
 
+1.52 - Thu Jan 26 02:13:05 2006
+* Took out an exit() that caused Windows users some problems.
+* If you aren't experiencing oddities, you don't need to 
+upgrade
+* I changed the distro name to cpan-script to distinguish this
+from the CPAN module
+
 1.51 - Wed Jan 11 00:25:52 2006
 	* bumped the version number which I forgot to do last time. This
 	version should get onto CPAN and it fixes the things I noted in
