@@ -1,8 +1,8 @@
 Changes
-MANIFEST			This list of files
-Makefile.PL
-META.yml
 cpan
+Makefile.PL
+MANIFEST
+META.yml
 t/compile.t
 t/pod.t
 t/pod_coverage.t

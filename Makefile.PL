@@ -5,7 +5,7 @@ eval "use Test::Manifest 1.14";
 
 WriteMakefile(
     'NAME'		    => 'cpan-script',
-	'VERSION'       => '1.52',
+	'VERSION'       => '1.53',
 	
 	'EXE_FILES' =>  [ 'cpan' ],
 	    	
