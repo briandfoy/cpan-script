@@ -14,7 +14,7 @@ cpan - easily interact with CPAN from the command line
 	# with switches, installs modules with extra behavior
 	cpan [-cfimt] module_name [ module_name ... ]
 
-	# without arguments, starts CPAN shell
+	# without arguments, starts CPAN.pm shell
 	cpan
 
 	# without arguments, but some switches
@@ -22,7 +22,9 @@ cpan - easily interact with CPAN from the command line
 
 =head1 DESCRIPTION
 
-This script provides a command interface (not a shell) to CPAN.pm.
+This script provides a command interface (not a shell) to CPAN. At the
+moment it uses CPAN.pm to do the work, but it is not a one-shot command
+runner for CPAN.pm.
 
 =head2 Meta Options
 
@@ -173,6 +175,23 @@ use Getopt::Std;
 my $VERSION =
 	sprintf "%d.%d", q$Revision$ =~ m/ (\d+) \. (\d+) /xg;
 
+if( $ARGV[0] eq 'install' )
+	{
+	my @args = @ARGV;
+	shift @args;
+	
+	die <<"HERE";
+It looks like you specified 'install' as an argument to cpan(1). This
+script is not the CPAN.pm prompt and doesn't understand the same commands.
+In fact, doesn't require the extra typing. You probably just want to
+list the modules you want to install:
+
+	cpan @args
+	
+See the documentation for more details on using this script.
+HERE
+	}
+	
 if( 0 == @ARGV ) { CPAN::shell(); exit 0 }
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
