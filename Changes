@@ -1,5 +1,9 @@
 $Id$
 
+1.53 - Wed Nov  1 15:58:17 2006
+	* Added trap to catch people using "install" as the first argument.
+	The script just dies telling them not to do that.
+
 1.52 - Thu Jan 26 02:13:05 2006
 * Took out an exit() that caused Windows users some problems.
 * If you aren't experiencing oddities, you don't need to 
