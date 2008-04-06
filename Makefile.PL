@@ -7,7 +7,7 @@ eval "use Test::Manifest 1.14";
 
 WriteMakefile(
     'NAME'		    => 'cpan-script',
-	'VERSION'       => '1.53',
+	'VERSION'       => '1.54',
 	'ABSTRACT'      => 'Interact with CPAN from the command line',
 
 	'LICENSE'       => 'perl',
