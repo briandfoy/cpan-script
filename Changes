@@ -1,5 +1,10 @@
 $Id$
 
+1.53 - Sun Apr  6 15:49:50 2008
+	* cpan(1) now ignores the first argument if it is "install" and has 
+	additional arguments. Previously it gave a warning. Adam Kennedy 
+	promised to buy me a beer if I gave him his way, so why not :)
+
 1.53 - Wed Nov  1 15:58:17 2006
 	* Added trap to catch people using "install" as the first argument.
 	The script just dies telling them not to do that.
