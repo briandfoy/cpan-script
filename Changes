@@ -1,5 +1,9 @@
 $Id$
 
+1.54 - Fri Apr 11 10:44:23 2008
+	* Minor doc change
+	* Re-release since PAUSE was having trouble
+
 1.54 - Sun Apr  6 15:53:26 2008
 	* Don't give a warning if the user is a Linux weenie who likes
 	to type "install". Just ignore it an move on. It's still not
