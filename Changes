@@ -1,30 +1,21 @@
 $Id$
 
-1.54 - Fri Apr 11 10:44:23 2008
-	* Minor doc change
-	* Re-release since PAUSE was having trouble
-
 1.54 - Sun Apr  6 15:53:26 2008
 	* Don't give a warning if the user is a Linux weenie who likes
 	to type "install". Just ignore it an move on. It's still not
 	an approved or documented calling sequence, but it does get
 	me a free beer from Adam Kennedy.
 
-1.53 - Sun Apr  6 15:49:50 2008
-	* cpan(1) now ignores the first argument if it is "install" and has 
-	additional arguments. Previously it gave a warning. Adam Kennedy 
-	promised to buy me a beer if I gave him his way, so why not :)
-
 1.53 - Wed Nov  1 15:58:17 2006
 	* Added trap to catch people using "install" as the first argument.
 	The script just dies telling them not to do that.
 
 1.52 - Thu Jan 26 02:13:05 2006
-* Took out an exit() that caused Windows users some problems.
-* If you aren't experiencing oddities, you don't need to 
-upgrade
-* I changed the distro name to cpan-script to distinguish this
-from the CPAN module
+	* Took out an exit() that caused Windows users some problems.
+	* If you aren't experiencing oddities, you don't need to 
+	upgrade
+	* I changed the distro name to cpan-script to distinguish this
+	from the CPAN module
 
 1.51 - Wed Jan 11 00:25:52 2006
 	* bumped the version number which I forgot to do last time. This
