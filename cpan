@@ -188,7 +188,7 @@ if( 0 == @ARGV ) { CPAN::shell(); exit 0 }
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 # set up the order of options that we layer over CPAN::Shell
-my @META_OPTIONS = qw( h v C A D O L a r );
+my @META_OPTIONS = qw( h v C A D O L a r j J);
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 # map switches to method names in CPAN::Shell
@@ -211,6 +211,10 @@ my %Method_table = (
 # key => [ sub ref, takes args?, exit value, description ]
 	h => [ \&_print_help,        0, 0, 'Printing help'          ],
 	v => [ \&_print_version,     0, 0, 'Printing version'       ],
+
+	j => [ \&_load_config,       1, 0, 'Use specified config file' ],
+	J => [ \&_dump_config,       0, 0, 'Dump configuration to stdout' ],
+	
 	C => [ \&_show_Changes,      1, 0, 'Showing Changes file'   ],
 	A => [ \&_show_Author,       1, 0, 'Showing Author'         ],
 	D => [ \&_show_Details,      1, 0, 'Showing Details'        ],
@@ -248,6 +252,20 @@ $option_count -= $options{'f'}; # don't count force
 # if there are no options, set -i (this line fixes RT ticket 16915)
 $options{i}++ unless $option_count;
 
+if( $options{j} )
+	{
+	$Method_table{j}[ $Method_table_index{code} ]->( \@ARGV );
+	delete $options{j};
+	}
+else
+	{
+	# this is what CPAN.pm would do otherwise
+	CPAN::HandleConfig->load(
+		be_silent  => 1,
+		write_file => 0,
+		);
+	}
+	
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 # try each of the possible switches until we find one to handle
 # print an error message if there are too many switches
@@ -337,6 +355,41 @@ sub _recompiling
 	CPAN::Shell->recompile;
 	}
 
+sub _load_config
+	{
+	my $args = shift;
+	
+	my $file = $args->[0] || '';
+	
+	# should I clear out any existing config here?
+	# $CPAN::Config = {};
+	# delete $INC{CPAN/Config.pm};
+	die( "Config file [$file] does not exist!\n" ) unless -e $file;
+	
+	my $rc = eval "require '$file'";
+	
+	die( "Could not load [$file]: $@\n") unless $rc;
+	
+	return 1;
+	}
+
+sub _dump_config
+	{
+	my $args = shift;
+	use Data::Dumper;
+	
+	my $fh = $args->[0] || \*STDOUT;
+		
+	my $dd = Data::Dumper->new( 
+		[$CPAN::Config], 
+		['$CPAN::Config'] 
+		);
+		
+	print $fh $dd->Dump, "\n1;\n__END__\n";
+	
+	return 1;
+	}
+	
 sub _show_Changes
 	{
 	my $args = shift;
