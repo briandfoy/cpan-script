@@ -3,3 +3,5 @@ cpan-*
 pm_to_blib
 blib
 Makefile
+.DS_Store
+Makefile.old

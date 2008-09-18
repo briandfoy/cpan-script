@@ -1,8 +1,9 @@
 #!/usr/bin/perl
 use strict;
+use vars qw($VERSION);
 
 use App::Cpan;
-our $VERSION = App::Cpan->VERSION;
+$VERSION = '1.55_01';
 
 App::Cpan->run( @ARGV );
 

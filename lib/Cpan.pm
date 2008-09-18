@@ -1,7 +1,9 @@
 package App::Cpan;
-
 use strict;
 use warnings;
+use vars qw($VERSION);
+
+$VERSION = '1.55_01';
 
 =head1 NAME
 
@@ -157,8 +159,6 @@ comes directly from CPAN.pm.
 use CPAN ();
 use Getopt::Std;
 
-our $VERSION = '1.55_01';
-
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 # set up the order of options that we layer over CPAN::Shell
 my @META_OPTIONS = qw( h v C A D O L a r j J );
@@ -243,18 +243,23 @@ sub _process_options
 sub _process_setup_options
 	{
 	my( $class, $options ) = @_;
-	
+
 	if( $options->{j} )
 		{
-		
-		
+		$Method_table{j}[ $Method_table_index{code} ]->( $options->{j} );
+		delete $options->{j};
 		}
 	else
 		{
-		CPAN::HandleConfig->load;
+		# this is what CPAN.pm would do otherwise
+		CPAN::HandleConfig->load(
+			be_silent  => 1,
+			write_file => 0,
+			);
 		}
 		
 	my $option_count = grep { $options->{$_} } @option_order;
+	no warnings 'uninitialized';
 	$option_count -= $options->{'f'}; # don't count force
 	
 	$options->{i}++ unless $option_count;
