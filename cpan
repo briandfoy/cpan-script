@@ -189,7 +189,7 @@ You may redistribute this under the same terms as Perl itself.
 use CPAN ();
 use Getopt::Std;
 
-my $VERSION = sprintf "%d.%d", qw( 1 55 );
+my $VERSION = sprintf "%d.%d", qw( 1 56 );
 
 if( $ARGV[0] eq 'install' and @ARGV > 1 )
 	{
