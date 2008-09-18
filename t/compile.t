@@ -1,5 +1,3 @@
-# $Id$
-
 use Test::More tests => 1;
 
 my $file = 'blib/script/cpan';

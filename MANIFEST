@@ -1,7 +1,8 @@
 Changes
-cpan
+lib/Cpan.pm
 Makefile.PL
 MANIFEST
+script/cpan
 t/compile.t
 t/pod.t
 t/pod_coverage.t

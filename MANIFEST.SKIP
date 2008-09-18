@@ -14,4 +14,4 @@ cpan-.*
 .bak$
 .old$
 \.#
-
+\.git

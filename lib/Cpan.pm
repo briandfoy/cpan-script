@@ -1,13 +1,11 @@
-#!/usr/bin/perl
+package App::Cpan;
 
-# $Id$
 use strict;
-
-#BEGIN{ unshift @INC, sub { print "Trying to load $_[1]\n"; 0 }; }
+use warnings;
 
 =head1 NAME
 
-cpan - easily interact with CPAN from the command line
+App::Cpan - easily interact with CPAN from the command line
 
 =head1 SYNOPSIS
 
@@ -154,53 +152,16 @@ Runs a `make test` on the specified modules.
 Most behaviour, including environment variables and configuration,
 comes directly from CPAN.pm.
 
-=head1 SOURCE AVAILABILITY
-
-This source is part of a SourceForge project which always has the
-latest sources in CVS, as well as all of the previous releases.
-
-	http://sourceforge.net/projects/brian-d-foy/
-
-If, for some reason, I disappear from the world, one of the other
-members of the project can shepherd this module appropriately.
-
-=head1 CREDITS
-
-Japheth Cleaver added the bits to allow a forced install (-f).
-
-Jim Brandt suggest and provided the initial implementation for the
-up-to-date and Changes features.
-
-Adam Kennedy pointed out that exit() causes problems on Windows
-where this script ends up with a .bat extension
-
-=head1 AUTHOR
-
-brian d foy, C<< <bdfoy@cpan.org> >>
-
-=head1 COPYRIGHT
-
-Copyright (c) 2001-2006, brian d foy, All Rights Reserved.
-
-You may redistribute this under the same terms as Perl itself.
-
 =cut
 
 use CPAN ();
 use Getopt::Std;
 
-my $VERSION = sprintf "%d.%d", qw( 1 56 );
-
-if( $ARGV[0] eq 'install' and @ARGV > 1 )
-	{
-	shift @ARGV;
-	}
-	
-if( 0 == @ARGV ) { CPAN::shell(); exit 0 }
+our $VERSION = '1.55_01';
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 # set up the order of options that we layer over CPAN::Shell
-my @META_OPTIONS = qw( h v C A D O L a r j J);
+my @META_OPTIONS = qw( h v C A D O L a r j J );
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 # map switches to method names in CPAN::Shell
@@ -221,25 +182,25 @@ my @CPAN_OPTIONS = grep { $_ ne $Default } sort keys %CPAN_METHODS;
 # use this stuff instead of hard-coded indices and values
 my %Method_table = (
 # key => [ sub ref, takes args?, exit value, description ]
-	h => [ \&_print_help,        0, 0, 'Printing help'          ],
-	v => [ \&_print_version,     0, 0, 'Printing version'       ],
+	h =>  [ \&_print_help,        0, 0, 'Printing help'                ],
+	v =>  [ \&_print_version,     0, 0, 'Printing version'             ],
 
-	j => [ \&_load_config,       1, 0, 'Use specified config file' ],
-	J => [ \&_dump_config,       0, 0, 'Dump configuration to stdout' ],
+	j =>  [ \&_load_config,       1, 0, 'Use specified config file'    ],
+	J =>  [ \&_dump_config,       0, 0, 'Dump configuration to stdout' ],
 	
-	C => [ \&_show_Changes,      1, 0, 'Showing Changes file'   ],
-	A => [ \&_show_Author,       1, 0, 'Showing Author'         ],
-	D => [ \&_show_Details,      1, 0, 'Showing Details'        ],
-	O => [ \&_show_out_of_date,  0, 0, 'Showing Out of date'    ],
-	L => [ \&_show_author_mods,  1, 0, 'Showing author mods'    ],
-	a => [ \&_create_autobundle, 0, 0, 'Creating autobundle'    ],
-	r => [ \&_recompile,         0, 0, 'Recompiling'            ],
+	C =>  [ \&_show_Changes,      1, 0, 'Showing Changes file'         ],
+	A =>  [ \&_show_Author,       1, 0, 'Showing Author'               ],
+	D =>  [ \&_show_Details,      1, 0, 'Showing Details'              ],
+	O =>  [ \&_show_out_of_date,  0, 0, 'Showing Out of date'          ],
+	L =>  [ \&_show_author_mods,  1, 0, 'Showing author mods'          ],
+	a =>  [ \&_create_autobundle, 0, 0, 'Creating autobundle'          ],
+	r =>  [ \&_recompile,         0, 0, 'Recompiling'                  ],
 
-	c => [ \&_default,           1, 0, 'Running `make clean`'   ],
-	f => [ \&_default,           1, 0, 'Installing with force'  ],
-	i => [ \&_default,           1, 0, 'Running `make install`' ],
-   'm' => [ \&_default,          1, 0, 'Running `make`'         ],
-	t => [ \&_default,           1, 0, 'Running `make test`'    ],
+	c =>  [ \&_default,           1, 0, 'Running `make clean`'         ],
+	f =>  [ \&_default,           1, 0, 'Installing with force'        ],
+	i =>  [ \&_default,           1, 0, 'Running `make install`'       ],
+   'm' => [ \&_default,           1, 0, 'Running `make`'               ],
+	t =>  [ \&_default,           1, 0, 'Running `make test`'          ],
 
 	);
 
@@ -254,61 +215,89 @@ my %Method_table_index = (
 # finally, do some argument processing
 my @option_order = ( @META_OPTIONS, @CPAN_OPTIONS );
 
-my %options;
-Getopt::Std::getopts(
-	join( '', 
-		map {
-			$Method_table{ $_ }[ $Method_table_index{takes_args} ] ? "$_:" : $_
-			} @option_order ), \%options );
-
-
-print Dumper( \%options, \@ARGV );
-
-
-if( $options{j} )
+sub _stupid_interface_hack_for_non_rtfmers
 	{
-	$Method_table{j}[ $Method_table_index{code} ]->( $options{j} );
-	delete $options{j};
+	shift @ARGV if( $ARGV[0] eq 'install' and @ARGV > 1 )
 	}
-else
+	
+sub _process_options
 	{
-	# this is what CPAN.pm would do otherwise
-	CPAN::HandleConfig->load(
-		be_silent  => 1,
-		write_file => 0,
+	my %options;
+	
+	# if no arguments, just drop into the shell
+	if( 0 == @ARGV ) { CPAN::shell(); exit 0 }
+
+	Getopt::Std::getopts(
+		join( '', 
+			map {
+				$Method_table{ $_ }[ $Method_table_index{takes_args} ] ? "$_:" : $_
+				} @option_order 
+			), 
+				
+		\%options 
 		);
+		
+	\%options;
+	}
+
+sub _process_setup_options
+	{
+	my( $class, $options ) = @_;
+	
+	if( $options->{j} )
+		{
+		
+		
+		}
+	else
+		{
+		CPAN::HandleConfig->load;
+		}
+		
+	my $option_count = grep { $options->{$_} } @option_order;
+	$option_count -= $options->{'f'}; # don't count force
+	
+	$options->{i}++ unless $option_count;
 	}
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 # if there are no options, set -i (this line fixes RT ticket 16915)
-my $option_count = grep { $options{$_} } @option_order;
-$option_count -= $options{'f'}; # don't count force
 
-$options{i}++ unless $option_count;
+
+
+=item run()
+
+Just do it
+
+=cut
+
+sub run
+	{
+	my $class = shift;
 	
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
-# try each of the possible switches until we find one to handle
-# print an error message if there are too many switches
-# print an error message if there are arguments when there shouldn't be any
-foreach my $option ( @option_order )
-	{	
-	next unless $options{$option};
-	die unless 
-		ref $Method_table{$option}[ $Method_table_index{code} ] eq ref sub {};
+	$class->_stupid_interface_hack_for_non_rtfmers;
 	
-	print "$Method_table{$option}[ $Method_table_index{description} ] " .
-		"-- ignoring other opitions\n" if $option_count > 1;
-	print "$Method_table{$option}[ $Method_table_index{description} ] " .
-		"-- ignoring other arguments\n" 
-		if( @ARGV && ! $Method_table{$option}[ $Method_table_index{takes_args} ] );
+	my $options = $class->_process_options;
+	
+	$class->_process_setup_options( $options );
+	
+	foreach my $option ( @option_order )
+		{	
+		next unless $options->{$option};
+		die unless 
+			ref $Method_table{$option}[ $Method_table_index{code} ] eq ref sub {};
 		
-	print "1. option $option: CPAN home is $CPAN::Config->{cpan_home}\n";
-	$Method_table{$option}[ $Method_table_index{code} ]->( \@ARGV );
-	print "2. option $option: CPAN home is $CPAN::Config->{cpan_home}\n";
-	
-	last;
+#		print "$Method_table{$option}[ $Method_table_index{description} ] " .
+#			"-- ignoring other opitions\n" if $option_count > 1;
+		print "$Method_table{$option}[ $Method_table_index{description} ] " .
+			"-- ignoring other arguments\n" 
+			if( @ARGV && ! $Method_table{$option}[ $Method_table_index{takes_args} ] );
+			
+		$Method_table{$option}[ $Method_table_index{code} ]->( \ @ARGV, $options );
+		
+		last;
+		}
 	}
-
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
@@ -316,7 +305,7 @@ foreach my $option ( @option_order )
 
 sub _default
 	{
-	my $args = shift;
+	my( $args, $options ) = @_;
 	
 	my $switch = '';
 
@@ -325,7 +314,7 @@ sub _default
 	foreach my $option ( @CPAN_OPTIONS )
 		{
 		next if $option eq 'f';
-		next unless $options{$option};
+		next unless $options->{$option};
 		$switch = $option;
 		last;
 		}
@@ -343,13 +332,12 @@ sub _default
 	die "CPAN.pm cannot $method!\n" unless CPAN::Shell->can( $method );
 
 	# call the CPAN::Shell method, with force if specified
-	print "3. option $method: CPAN home is $CPAN::Config->{cpan_home}\n";
 	foreach my $arg ( @$args )
 		{
-		if( $options{f} ) { CPAN::Shell->force( $method, $arg ) }
-		else              { CPAN::Shell->$method( $arg )        }
+		if( $options->{f} ) { CPAN::Shell->force( $method, $arg ) }
+		else                 { CPAN::Shell->$method( $arg )        }
 		}
-	print "4. option $method: CPAN home is $CPAN::Config->{cpan_home}\n";
+
 	}
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
@@ -539,3 +527,31 @@ sub _show_author_mods
 	}
 	
 1;
+
+=head1 SOURCE AVAILABILITY
+
+This code is in Github:
+
+	git://github.com/briandfoy/cpan_script.git
+
+=head1 CREDITS
+
+Japheth Cleaver added the bits to allow a forced install (-f).
+
+Jim Brandt suggest and provided the initial implementation for the
+up-to-date and Changes features.
+
+Adam Kennedy pointed out that exit() causes problems on Windows
+where this script ends up with a .bat extension
+
+=head1 AUTHOR
+
+brian d foy, C<< <bdfoy@cpan.org> >>
+
+=head1 COPYRIGHT
+
+Copyright (c) 2001-2008, brian d foy, All Rights Reserved.
+
+You may redistribute this under the same terms as Perl itself.
+
+=cut
