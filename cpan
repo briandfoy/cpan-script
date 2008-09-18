@@ -3,6 +3,8 @@
 # $Id$
 use strict;
 
+#BEGIN{ unshift @INC, sub { print "Trying to load $_[1]\n"; 0 }; }
+
 =head1 NAME
 
 cpan - easily interact with CPAN from the command line
@@ -58,6 +60,16 @@ Show the module details. This prints one line for each out-of-date module
 (meaning, modules locally installed but have newer versions on CPAN).
 Each line has three columns: module name, local version, and CPAN
 version.
+
+=item -j Config.pm
+
+Load the file that has the CPAN configuration data. This should have the
+same format as the standard F<CPAN/Config.pm> file, which defines 
+C<$CPAN::Config> as an anonymous hash.
+
+=item -J
+
+Dump the configuration in the same format that CPAN.pm uses.
 
 =item -L author [ author ... ]
 
@@ -244,17 +256,18 @@ my @option_order = ( @META_OPTIONS, @CPAN_OPTIONS );
 
 my %options;
 Getopt::Std::getopts(
-	join( '', @option_order ), \%options );
+	join( '', 
+		map {
+			$Method_table{ $_ }[ $Method_table_index{takes_args} ] ? "$_:" : $_
+			} @option_order ), \%options );
 
-my $option_count = grep { $options{$_} } @option_order;
-$option_count -= $options{'f'}; # don't count force
 
-# if there are no options, set -i (this line fixes RT ticket 16915)
-$options{i}++ unless $option_count;
+print Dumper( \%options, \@ARGV );
+
 
 if( $options{j} )
 	{
-	$Method_table{j}[ $Method_table_index{code} ]->( \@ARGV );
+	$Method_table{j}[ $Method_table_index{code} ]->( $options{j} );
 	delete $options{j};
 	}
 else
@@ -265,13 +278,20 @@ else
 		write_file => 0,
 		);
 	}
+
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+# if there are no options, set -i (this line fixes RT ticket 16915)
+my $option_count = grep { $options{$_} } @option_order;
+$option_count -= $options{'f'}; # don't count force
+
+$options{i}++ unless $option_count;
 	
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 # try each of the possible switches until we find one to handle
 # print an error message if there are too many switches
 # print an error message if there are arguments when there shouldn't be any
 foreach my $option ( @option_order )
-	{
+	{	
 	next unless $options{$option};
 	die unless 
 		ref $Method_table{$option}[ $Method_table_index{code} ] eq ref sub {};
@@ -282,10 +302,13 @@ foreach my $option ( @option_order )
 		"-- ignoring other arguments\n" 
 		if( @ARGV && ! $Method_table{$option}[ $Method_table_index{takes_args} ] );
 		
+	print "1. option $option: CPAN home is $CPAN::Config->{cpan_home}\n";
 	$Method_table{$option}[ $Method_table_index{code} ]->( \@ARGV );
+	print "2. option $option: CPAN home is $CPAN::Config->{cpan_home}\n";
 	
 	last;
 	}
+
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
@@ -320,11 +343,13 @@ sub _default
 	die "CPAN.pm cannot $method!\n" unless CPAN::Shell->can( $method );
 
 	# call the CPAN::Shell method, with force if specified
+	print "3. option $method: CPAN home is $CPAN::Config->{cpan_home}\n";
 	foreach my $arg ( @$args )
 		{
 		if( $options{f} ) { CPAN::Shell->force( $method, $arg ) }
 		else              { CPAN::Shell->$method( $arg )        }
 		}
+	print "4. option $method: CPAN home is $CPAN::Config->{cpan_home}\n";
 	}
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
@@ -356,17 +381,21 @@ sub _recompiling
 	}
 
 sub _load_config
-	{
-	my $args = shift;
-	
-	my $file = $args->[0] || '';
+	{	
+	my $file = shift || '';
 	
 	# should I clear out any existing config here?
-	# $CPAN::Config = {};
-	# delete $INC{CPAN/Config.pm};
+	$CPAN::Config = {};
+	delete $INC{'CPAN/Config.pm'};
 	die( "Config file [$file] does not exist!\n" ) unless -e $file;
 	
 	my $rc = eval "require '$file'";
+
+	# CPAN::HandleConfig::require_myconfig_or_config looks for this
+	$INC{'CPAN/MyConfig.pm'} = 'fake out!';
+	
+	# CPAN::HandleConfig::load looks for this
+	$CPAN::Config_loaded = 'fake out';
 	
 	die( "Could not load [$file]: $@\n") unless $rc;
 	
