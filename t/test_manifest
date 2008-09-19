@@ -1,3 +1,6 @@
 compile.t
 pod.t
 pod_coverage.t
+mock.t
+install_hack.t
+process_options.t

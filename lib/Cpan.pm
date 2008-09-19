@@ -142,17 +142,10 @@ Runs a `make test` on the specified modules.
 	# force install modules ( must use -i )
 	cpan -fi CGI::Minimal URI
 
-=head1 TO DO
 
+=head2 Methods
 
-=head1 BUGS
-
-* none noted
-
-=head1 SEE ALSO
-
-Most behaviour, including environment variables and configuration,
-comes directly from CPAN.pm.
+=over 4
 
 =cut
 
@@ -217,6 +210,7 @@ my @option_order = ( @META_OPTIONS, @CPAN_OPTIONS );
 
 sub _stupid_interface_hack_for_non_rtfmers
 	{
+	no warnings 'uninitialized';
 	shift @ARGV if( $ARGV[0] eq 'install' and @ARGV > 1 )
 	}
 	
@@ -226,18 +220,12 @@ sub _process_options
 	
 	# if no arguments, just drop into the shell
 	if( 0 == @ARGV ) { CPAN::shell(); exit 0 }
-
-	Getopt::Std::getopts(
-		join( '', 
-			map {
-				$Method_table{ $_ }[ $Method_table_index{takes_args} ] ? "$_:" : $_
-				} @option_order 
-			), 
-				
-		\%options 
-		);
-		
-	\%options;
+	else
+		{
+       		1
+       		
+       		
+       	}
 	}
 
 sub _process_setup_options
@@ -532,6 +520,19 @@ sub _show_author_mods
 	}
 	
 1;
+
+=back
+
+=head1 TO DO
+
+=head1 BUGS
+
+* none noted
+
+=head1 SEE ALSO
+
+Most behaviour, including environment variables and configuration,
+comes directly from CPAN.pm.
 
 =head1 SOURCE AVAILABILITY
 

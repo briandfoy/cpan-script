@@ -5,3 +5,4 @@ blib
 Makefile
 .DS_Store
 Makefile.old
+cover_db
