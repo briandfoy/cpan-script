@@ -28,7 +28,7 @@ cpan - easily interact with CPAN from the command line
 	cpan
 
 	# without arguments, but some switches
-	cpan [-ahrvACDLO]
+	cpan [-ahrvACDlLO]
 
 =head1 DESCRIPTION
 
