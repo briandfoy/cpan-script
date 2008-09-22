@@ -150,17 +150,20 @@ Runs a `make test` on the specified modules.
 =cut
 
 use CPAN ();
+use File::Spec;
 use Getopt::Std;
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 # set up the order of options that we layer over CPAN::Shell
-my @META_OPTIONS = qw( h v C A D O L a r j J );
+BEGIN { # most of this should be in methods
+use vars qw( @META_OPTIONS $Default %CPAN_METHODS @CPAN_OPTIONS  @option_order
+	%Method_table %Method_table_index );
+	
+@META_OPTIONS = qw( h v C A D O l L a r j J );
 
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
-# map switches to method names in CPAN::Shell
-my $Default = 'default';
+$Default = 'default';
 
-my %CPAN_METHODS = (
+%CPAN_METHODS = ( # map switches to method names in CPAN::Shell
 	$Default => 'install',
 	'c'      => 'clean',
 	'f'      => 'force',
@@ -168,12 +171,15 @@ my %CPAN_METHODS = (
 	'm'      => 'make',
 	't'      => 'test',
 	);
-my @CPAN_OPTIONS = grep { $_ ne $Default } sort keys %CPAN_METHODS;
+@CPAN_OPTIONS = grep { $_ ne $Default } sort keys %CPAN_METHODS;
+
+@option_order = ( @META_OPTIONS, @CPAN_OPTIONS );
+
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 # map switches to the subroutines in this script, along with other information.
 # use this stuff instead of hard-coded indices and values
-my %Method_table = (
+%Method_table = (
 # key => [ sub ref, takes args?, exit value, description ]
 	h =>  [ \&_print_help,        0, 0, 'Printing help'                ],
 	v =>  [ \&_print_version,     0, 0, 'Printing version'             ],
@@ -185,6 +191,9 @@ my %Method_table = (
 	A =>  [ \&_show_Author,       1, 0, 'Showing Author'               ],
 	D =>  [ \&_show_Details,      1, 0, 'Showing Details'              ],
 	O =>  [ \&_show_out_of_date,  0, 0, 'Showing Out of date'          ],
+
+	l =>  [ \&_list_all_mods,     0, 0, 'Listing all modules'          ],
+
 	L =>  [ \&_show_author_mods,  1, 0, 'Showing author mods'          ],
 	a =>  [ \&_create_autobundle, 0, 0, 'Creating autobundle'          ],
 	r =>  [ \&_recompile,         0, 0, 'Recompiling'                  ],
@@ -197,16 +206,16 @@ my %Method_table = (
 
 	);
 
-my %Method_table_index = (
+%Method_table_index = (
 	code        => 0,
 	takes_args  => 1,
 	exit_value  => 2,
 	description => 3,
 	);
-	
+}
+
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 # finally, do some argument processing
-my @option_order = ( @META_OPTIONS, @CPAN_OPTIONS );
 
 sub _stupid_interface_hack_for_non_rtfmers
 	{
@@ -222,16 +231,16 @@ sub _process_options
 	if( 0 == @ARGV ) { CPAN::shell(); exit 0 }
 	else
 		{
-       		1
-       		
-       		
-       	}
+		Getopt::Std::getopts(
+		  join( '', @option_order ), \%options );    
+		 \%options;
+		}
 	}
 
 sub _process_setup_options
 	{
 	my( $class, $options ) = @_;
-
+	
 	if( $options->{j} )
 		{
 		$Method_table{j}[ $Method_table_index{code} ]->( $options->{j} );
@@ -519,6 +528,118 @@ sub _show_author_mods
 	
 	}
 	
+sub _list_all_mods
+	{
+	require File::Find;
+	
+	my $args = shift;
+	
+	my( $wanted, $reporter ) = _generator();
+	
+	my $fh = \*STDOUT;
+	
+	foreach my $inc ( @INC )
+		{		
+		File::Find::find( { wanted => $wanted }, $inc );
+		
+		my $count = 0;
+		foreach my $file ( @{ $reporter->() } )
+			{
+			my $version = _parse_version_safely( $file );
+			
+			my $module_name = _path_to_module( $inc, $file );
+			
+			print $fh "$module_name\t$version\n";
+			
+			#last if $count++ > 5;
+			}
+		}
+	}
+	
+sub _generator
+	{			
+	my @files = ();
+	
+	sub { push @files, 
+		File::Spec->canonpath( $File::Find::name ) 
+		if m/\A\w+\.pm\z/ },
+	sub { \@files },
+	}
+	
+sub _parse_version_safely # stolen from PAUSE's mldistwatch, but refactored
+	{
+	my( $file ) = @_;
+	
+	local $/ = "\n";
+	local $_; # don't mess with the $_ in the map calling this
+	
+	return unless open FILE, "<$file";
+
+	my $in_pod = 0;
+	my $version;
+	while( <FILE> ) 
+		{
+		chomp;
+		$in_pod = /^=(?!cut)/ ? 1 : /^=cut/ ? 0 : $in_pod;
+		next if $in_pod || /^\s*#/;
+
+		next unless /([\$*])(([\w\:\']*)\bVERSION)\b.*\=/;
+		my( $sigil, $var ) = ( $1, $2 );
+		
+		$version = _eval_version( $_, $sigil, $var );
+		last;
+		}
+	close FILE;
+
+	return 'undef' unless defined $version;
+	
+	return $version;
+	}
+
+sub _eval_version
+	{
+	my( $line, $sigil, $var ) = @_;
+	
+	my $eval = qq{ 
+		package ExtUtils::MakeMaker::_version;
+
+		local $sigil$var;
+		\$$var=undef; do {
+			$line
+			}; \$$var
+		};
+		
+	my $version = do {
+		local $^W = 0;
+		no strict;
+		eval( $eval );
+		};
+
+	return $version;
+	}
+
+=item path_to_module( INC_DIR, PATH )
+
+Turn a C<PATH> into a Perl module name, ignoring the C<@INC> directory
+specified in C<INC_DIR>.
+	
+=cut
+
+sub _path_to_module
+	{
+	my( $inc, $path ) = @_;
+	
+	my $module_path = substr( $path, length $inc );
+	$module_path =~ s/\.pm\z//;
+	
+	# XXX: this is cheating and doesn't handle everything right
+	my @dirs = grep { ! /\W/ } File::Spec->splitdir( $module_path );
+	shift @dirs;
+	
+	my $module_name = join "::", @dirs;
+	
+	return $module_name;
+	}
 1;
 
 =back

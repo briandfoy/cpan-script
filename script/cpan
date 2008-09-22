@@ -74,6 +74,10 @@ C<$CPAN::Config> as an anonymous hash.
 
 Dump the configuration in the same format that CPAN.pm uses.
 
+=item -l 
+
+List the modules install in @INC
+
 =item -L author [ author ... ]
 
 List the modules by the specified authors.
