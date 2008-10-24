@@ -159,7 +159,7 @@ BEGIN { # most of this should be in methods
 use vars qw( @META_OPTIONS $Default %CPAN_METHODS @CPAN_OPTIONS  @option_order
 	%Method_table %Method_table_index );
 	
-@META_OPTIONS = qw( h v C A D O l L a r j J );
+@META_OPTIONS = qw( h v C A D O l L a r j: J );
 
 $Default = 'default';
 
