@@ -3,7 +3,7 @@ use strict;
 use vars qw($VERSION);
 
 use App::Cpan;
-$VERSION = '1.55_02';
+$VERSION = '1.55_03';
 
 App::Cpan->run( @ARGV );
 
