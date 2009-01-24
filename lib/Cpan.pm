@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use vars qw($VERSION);
 
-$VERSION = '1.55_03';
+$VERSION = '1.55_04';
 
 =head1 NAME
 
@@ -60,6 +60,18 @@ Show the module details. This prints one line for each out-of-date module
 (meaning, modules locally installed but have newer versions on CPAN).
 Each line has three columns: module name, local version, and CPAN
 version.
+
+=item -g module [ module ... ]
+
+Downloads to the current directory the latest distribution of the module.
+
+=item -G module [ module ... ]
+
+UNIMPLEMENTED
+
+Downloads to the current directory the latest distribution of the
+module, unpack each distribution, and create a git repository for each
+distribution.
 
 =item -j Config.pm
 
@@ -159,7 +171,7 @@ BEGIN { # most of this should be in methods
 use vars qw( @META_OPTIONS $Default %CPAN_METHODS @CPAN_OPTIONS  @option_order
 	%Method_table %Method_table_index );
 	
-@META_OPTIONS = qw( h v C A D O l L a r j: J );
+@META_OPTIONS = qw( h v g G C A D O l L a r j: J );
 
 $Default = 'default';
 
@@ -184,6 +196,8 @@ $Default = 'default';
 	h =>  [ \&_print_help,        0, 0, 'Printing help'                ],
 	v =>  [ \&_print_version,     0, 0, 'Printing version'             ],
 
+	g =>  [ \&_download,          0, 0, 'Download the latest distro'   ],
+	G =>  [ \&_gitify,            0, 0, 'Down and gitify the latest distro' ],
 	j =>  [ \&_load_config,       1, 0, 'Use specified config file'    ],
 	J =>  [ \&_dump_config,       0, 0, 'Dump configuration to stdout' ],
 	
@@ -259,12 +273,10 @@ sub _process_setup_options
 	no warnings 'uninitialized';
 	$option_count -= $options->{'f'}; # don't count force
 	
+	# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+	# if there are no options, set -i (this line fixes RT ticket 16915)
 	$options->{i}++ unless $option_count;
 	}
-
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
-# if there are no options, set -i (this line fixes RT ticket 16915)
-
 
 
 =item run()
@@ -408,7 +420,84 @@ sub _dump_config
 	
 	return 1;
 	}
+
+sub _download
+	{	
+	my $args = shift;
+	use Carp qw(cluck);
+	#Carp::cluck( "Here I am" );
 	
+	local $CPAN::DEBUG = 1;
+	
+	my %paths;
+	
+	foreach my $module ( @$args )
+		{
+		print "Checking $module\n";
+		my $path = CPAN::Shell->expand( "Module", $module )->cpan_file;
+		
+		print "Inst file would be $path\n";
+		
+		$paths{$module} = _get_file( _make_path( $path ) );
+		}
+		
+	return \%paths;
+	}
+
+sub _make_path { join "/", qw(authors id), $_[0] }
+	
+sub _get_file
+	{
+	my $path = shift;
+	
+	use Cwd;
+	use File::Spec::Functions;
+	use LWP::Simple qw(getstore);
+	
+	my $file = substr $path, rindex( $path, '/' ) + 1;
+	my $store_path = catfile( cwd(), $file );
+	print "Store path is $store_path\n";
+
+	foreach my $site ( @{ $CPAN::Config->{urllist} } )
+		{
+		my $fetch_path = join "/", $site, $path;
+		print "Trying $fetch_path\n";
+	    last if getstore( $fetch_path, $store_path );
+		}
+
+	return $store_path;
+	}
+
+sub _gitify
+	{
+	my $args = shift;
+	
+	require Archive::Extract;
+	use File::Basename;
+	
+	my $starting_dir = cwd;
+	
+	foreach my $module ( @$args )
+		{
+		print "Checking $module\n";
+		my $path = CPAN::Shell->expand( "Module", $module )->cpan_file;
+
+		my $store_paths = _download( [ $module ] );
+		print "gitify Store path is $store_paths->{$module}\n";
+		my $dirname = dirname( $store_paths->{$module} );	
+	
+		my $ae = Archive::Extract->new( archive => $store_paths->{$module} );
+		$ae->extract( to => $dirname );
+		
+		chdir $ae->extract_path;
+		
+		# can we do this in Pure Perl?
+		system( "git init; git add .; git commit -a -m 'initial import'" );
+		}
+	
+	chdir $starting_dir;
+	}
+
 sub _show_Changes
 	{
 	my $args = shift;
@@ -452,12 +541,18 @@ sub _get_changes_file
 	}
 	
 sub _show_Author
-	{
+	{	
 	my $args = shift;
 	
 	foreach my $arg ( @$args )
 		{
 		my $module = CPAN::Shell->expand( "Module", $arg );
+		unless( $module )
+			{
+			print "Didn't find a $arg module, so no author!";
+			next;
+			}
+			
 		my $author = CPAN::Shell->expand( "Author", $module->userid );
 	
 		next unless $module->userid;
@@ -617,13 +712,6 @@ sub _eval_version
 
 	return $version;
 	}
-
-=item path_to_module( INC_DIR, PATH )
-
-Turn a C<PATH> into a Perl module name, ignoring the C<@INC> directory
-specified in C<INC_DIR>.
-	
-=cut
 
 sub _path_to_module
 	{
