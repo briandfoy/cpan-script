@@ -166,6 +166,14 @@ use File::Spec;
 use Getopt::Std;
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+# The return values
+use constant HEY_IT_WORKED              => 0;
+use constant I_DONT_KNOW_WHAT_HAPPENED  => 1;
+use constant ITS_NOT_MY_FAULT           => 2;
+use constant THE_PROGRAMMERS_AN_IDIOT   => 4;
+use constant A_MODULE_FAILED_TO_INSTALL => 8;
+
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 # set up the order of options that we layer over CPAN::Shell
 BEGIN { # most of this should be in methods
 use vars qw( @META_OPTIONS $Default %CPAN_METHODS @CPAN_OPTIONS  @option_order
@@ -281,7 +289,10 @@ sub _process_setup_options
 
 =item run()
 
-Just do it
+Just do it.
+
+The C<run> method returns 0 on success and a postive number on 
+failure.
 
 =cut
 
@@ -289,28 +300,37 @@ sub run
 	{
 	my $class = shift;
 	
+	my $return_value = HEY_IT_WORKED; # assume that things will work
+	
 	$class->_stupid_interface_hack_for_non_rtfmers;
 	
 	my $options = $class->_process_options;
 	
 	$class->_process_setup_options( $options );
 	
-	foreach my $option ( @option_order )
+	OPTION: foreach my $option ( @option_order )
 		{	
 		next unless $options->{$option};
-		die unless 
-			ref $Method_table{$option}[ $Method_table_index{code} ] eq ref sub {};
-		
-#		print "$Method_table{$option}[ $Method_table_index{description} ] " .
-#			"-- ignoring other opitions\n" if $option_count > 1;
-		print "$Method_table{$option}[ $Method_table_index{description} ] " .
-			"-- ignoring other arguments\n" 
-			if( @ARGV && ! $Method_table{$option}[ $Method_table_index{takes_args} ] );
+
+		my( $sub, $takes_args, $description ) = 
+			map { $Method_table{$option}[ $Method_table_index{$_} ] }
+			qw( code takes_args );
 			
-		$Method_table{$option}[ $Method_table_index{code} ]->( \ @ARGV, $options );
+		unless( ref $sub eq ref sub {} )
+			{
+			$return_value = THE_PROGRAMMERS_AN_IDIOT;
+			last OPTION;
+			}
+		
+		print "$description -- ignoring other arguments\n" 
+			if( @ARGV && ! $takes_args );
+			
+		$return_value = $sub->( \ @ARGV, $options );
 		
 		last;
 		}
+
+	return $return_value;
 	}
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
@@ -346,12 +366,18 @@ sub _default
 	die "CPAN.pm cannot $method!\n" unless CPAN::Shell->can( $method );
 
 	# call the CPAN::Shell method, with force if specified
-	foreach my $arg ( @$args )
-		{
-		if( $options->{f} ) { CPAN::Shell->force( $method, $arg ) }
-		else                 { CPAN::Shell->$method( $arg )        }
+	my $use_the_force =  $options->{f};
+	
+	# How do I handle exit codes for multiple arguments?
+	my $errors = 0;
+	
+	foreach my $arg ( @$args ) 
+		{		
+		my $rc = CPAN::Shell->$method( $arg );
+		$errors++ unless defined $rc;
 		}
 
+	$errors ? I_DONT_KNOW_WHAT_HAPPENED ? HEY_IT_WORKED;
 	}
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 

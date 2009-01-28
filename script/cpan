@@ -1,12 +1,14 @@
-#!/usr/bin/perl
+#!env perl
 use strict;
 use vars qw($VERSION);
 
 use App::Cpan;
 $VERSION = '1.55_03';
 
-App::Cpan->run( @ARGV );
+my $rc = App::Cpan->run( @ARGV );
 
+# will this work under Strawberry Perl?
+exit( $rc || 0 );
 
 =head1 NAME
 
@@ -143,6 +145,9 @@ Runs a `make test` on the specified modules.
 
 =head2 Examples
 
+	# normal use, to install some modules
+	cpan LWP::Simple Term::ANSI Perl::Critic
+	
 	# print a help message
 	cpan -h
 
@@ -195,7 +200,7 @@ brian d foy, C<< <bdfoy@cpan.org> >>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2001-2006, brian d foy, All Rights Reserved.
+Copyright (c) 2001-2009, brian d foy, All Rights Reserved.
 
 You may redistribute this under the same terms as Perl itself.
 
