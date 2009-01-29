@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use vars qw($VERSION);
 
-$VERSION = '1.55_04';
+$VERSION = '1.56_01';
 
 =head1 NAME
 
@@ -302,6 +302,8 @@ sub run
 	
 	my $return_value = HEY_IT_WORKED; # assume that things will work
 	
+	$class->_hook_into_CPANpm_report;
+	
 	$class->_stupid_interface_hack_for_non_rtfmers;
 	
 	my $options = $class->_process_options;
@@ -373,14 +375,52 @@ sub _default
 	
 	foreach my $arg ( @$args ) 
 		{		
-		my $rc = CPAN::Shell->$method( $arg );
-		$errors++ unless defined $rc;
+		_clear_scalar();
+		CPAN::Shell->$method( $arg );
+		my $output = _get_scalar();
+
+		my @lines = split /\n/, $output;
+		$errors = grep { /NOT OK/ } @lines;
 		}
 
-	$errors ? I_DONT_KNOW_WHAT_HAPPENED ? HEY_IT_WORKED;
+	$errors ? I_DONT_KNOW_WHAT_HAPPENED : HEY_IT_WORKED;
 	}
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+
+=for comment
+
+CPAN.pm sends all the good stuff either to STDOUT, or to a temp
+file if $CPAN::Be_Silent is set. I have to intercept that output
+so I can find out what happened.
+
+=cut
+
+{
+my( $fh, $scalar );
+
+sub _hook_into_CPANpm_report
+	{
+	if( defined $fh ) { return ( $fh, $scalar ) }
+	
+	require CPAN;
+	
+	$CPAN::Be_Silent = 1;
+	
+	open $fh, ">", \ $scalar;
+	
+	no warnings 'redefine';
+	
+	*CPAN::Shell::report_fh = sub { $fh };
+	
+	return ( $fh, $scalar ); 
+	}
+	
+sub _clear_scalar { $scalar = '' }
+	
+sub _get_scalar   { $scalar }
+}
+
 sub _print_help
 	{
 	print STDERR "Use perldoc to read the documentation\n";
@@ -391,6 +431,8 @@ sub _print_version
 	{
 	print STDERR "$0 script version $VERSION, CPAN.pm version " . 
 		CPAN->VERSION . "\n";
+
+	return HEY_IT_WORKED;
 	}
 	
 sub _create_autobundle
@@ -399,6 +441,8 @@ sub _create_autobundle
 		"/Bundle\n";
 
 	CPAN::Shell->autobundle;
+
+	return HEY_IT_WORKED;
 	}
 
 sub _recompiling
@@ -406,9 +450,11 @@ sub _recompiling
 	print "Recompiling dynamically-loaded extensions\n";
 
 	CPAN::Shell->recompile;
+
+	return HEY_IT_WORKED;
 	}
 
-sub _load_config
+sub _load_config # -j
 	{	
 	my $file = shift || '';
 	
@@ -427,7 +473,7 @@ sub _load_config
 	
 	die( "Could not load [$file]: $@\n") unless $rc;
 	
-	return 1;
+	return HEY_IT_WORKED;
 	}
 
 sub _dump_config
@@ -444,7 +490,7 @@ sub _dump_config
 		
 	print $fh $dd->Dump, "\n1;\n__END__\n";
 	
-	return 1;
+	return HEY_IT_WORKED;
 	}
 
 sub _download
@@ -522,6 +568,8 @@ sub _gitify
 		}
 	
 	chdir $starting_dir;
+
+	return HEY_IT_WORKED;
 	}
 
 sub _show_Changes
@@ -544,6 +592,8 @@ sub _show_Changes
 		#print "URL: $url\n";
 		_get_changes_file($url);
 		}
+
+	return HEY_IT_WORKED;
 	}	
 	
 sub _get_changes_file
@@ -564,6 +614,8 @@ sub _get_changes_file
 	my $changes =  LWP::Simple::get( $changes_url );
 	#print "change text is: " . $change_link->text() . "\n";
 	print $changes;
+
+	return HEY_IT_WORKED;
 	}
 	
 sub _show_Author
@@ -586,6 +638,8 @@ sub _show_Author
 		printf "%-25s %-8s %-25s %s\n", 
 			$arg, $module->userid, $author->email, $author->fullname;
 		}
+
+	return HEY_IT_WORKED;
 	}	
 
 sub _show_Details
@@ -612,6 +666,8 @@ sub _show_Details
 		print "\n\n";
 		
 		}
+		
+	return HEY_IT_WORKED;
 	}	
 
 sub _show_out_of_date
@@ -631,6 +687,7 @@ sub _show_out_of_date
 			$module->cpan_version;
 		}
 
+	return HEY_IT_WORKED;
 	}
 
 sub _show_author_mods
@@ -647,6 +704,7 @@ sub _show_author_mods
 		print $module->id, "\n";
 		}
 	
+	return HEY_IT_WORKED;
 	}
 	
 sub _list_all_mods
@@ -675,6 +733,8 @@ sub _list_all_mods
 			#last if $count++ > 5;
 			}
 		}
+
+	return HEY_IT_WORKED;
 	}
 	
 sub _generator
@@ -754,6 +814,7 @@ sub _path_to_module
 	
 	return $module_name;
 	}
+
 1;
 
 =back

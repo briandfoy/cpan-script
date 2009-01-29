@@ -15,3 +15,6 @@ cpan-.*
 .old$
 \.#
 \.git
+TO_DO
+test-mirror/authors/id/B/BU/BUSTER/.*(Fails|OS|Fine)/
+cpan-home
