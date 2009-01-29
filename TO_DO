@@ -1,0 +1,5 @@
+* Make it possible to pass one time options to the Makefile/Build.PL
+
+    cpan -p "EXPATLIBPATH=... EXPATINCPATH=..." -i Foo
+
+* Exit with an error if something bad happens

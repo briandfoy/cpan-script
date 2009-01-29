@@ -341,7 +341,7 @@ sub _default
 	elsif(     $switch and not @$args )
 		{ die "Nothing to $CPAN_METHODS{$switch}!\n"; }
 
-	# Get and cheeck the method from CPAN::Shell
+	# Get and check the method from CPAN::Shell
 	my $method = $CPAN_METHODS{$switch};
 	die "CPAN.pm cannot $method!\n" unless CPAN::Shell->can( $method );
 
@@ -349,7 +349,7 @@ sub _default
 	foreach my $arg ( @$args )
 		{
 		if( $options->{f} ) { CPAN::Shell->force( $method, $arg ) }
-		else                 { CPAN::Shell->$method( $arg )        }
+		else                { CPAN::Shell->$method( $arg )        }
 		}
 
 	}

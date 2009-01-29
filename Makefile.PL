@@ -32,5 +32,5 @@ WriteMakefile(
 	'MAN1PODS'       => {},
 	'MAN3PODS'       => {},
 
-	clean => { FILES => '*.bak App-* cpan-*' },
+	clean => { FILES => '*.bak App-* cpan-* cover_db' },
 	);
