@@ -292,7 +292,7 @@ sub _process_setup_options
 Just do it.
 
 The C<run> method returns 0 on success and a postive number on 
-failure.
+failure. See the section on EXIT CODES for details on the values.
 
 =cut
 
@@ -757,6 +757,21 @@ sub _path_to_module
 1;
 
 =back
+
+=head1 EXIT VALUES
+
+The script exits with zero if it thinks that everything worked, or a 
+positive number if it thinks that something failed. Note, however, that
+in some cases it has to divine a failure by the output of things it does
+not control. For now, the exit codes are vague:
+
+	1	An unknown error
+
+	2	The was an external problem
+
+	4	There was an internal problem with the script
+
+	8	A module failed to install
 
 =head1 TO DO
 
