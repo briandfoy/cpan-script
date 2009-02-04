@@ -161,17 +161,21 @@ Runs a `make test` on the specified modules.
 
 =cut
 
+use autouse Carp => qw(carp croak cluck);
 use CPAN ();
-use File::Spec;
+use autouse Cwd => qw(cwd);
+use File::Spec::Functions;
+use File::Basename;
+
 use Getopt::Std;
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 # The return values
-use constant HEY_IT_WORKED              => 0;
-use constant I_DONT_KNOW_WHAT_HAPPENED  => 1;
-use constant ITS_NOT_MY_FAULT           => 2;
-use constant THE_PROGRAMMERS_AN_IDIOT   => 4;
-use constant A_MODULE_FAILED_TO_INSTALL => 8;
+use constant HEY_IT_WORKED              =>   0; 
+use constant I_DONT_KNOW_WHAT_HAPPENED  =>   1; # 0b0000_0001
+use constant ITS_NOT_MY_FAULT           =>   2;
+use constant THE_PROGRAMMERS_AN_IDIOT   =>   4;
+use constant A_MODULE_FAILED_TO_INSTALL =>   8;
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 # set up the order of options that we layer over CPAN::Shell
@@ -296,11 +300,16 @@ failure. See the section on EXIT CODES for details on the values.
 
 =cut
 
+my $logger;
+
 sub run
 	{
 	my $class = shift;
 	
 	my $return_value = HEY_IT_WORKED; # assume that things will work
+	
+	$logger = $class->_init_logger;
+	$logger->debug( "Using logger from @{[ref $logger]}" );
 	
 	$class->_hook_into_CPANpm_report;
 	
@@ -324,7 +333,7 @@ sub run
 			last OPTION;
 			}
 		
-		print "$description -- ignoring other arguments\n" 
+		$logger->info( "$description -- ignoring other arguments" )
 			if( @ARGV && ! $takes_args );
 			
 		$return_value = $sub->( \ @ARGV, $options );
@@ -335,6 +344,32 @@ sub run
 	return $return_value;
 	}
 
+{
+package Local::Null::Logger;
+
+sub new { bless \ my $x, $_[0] }
+sub AUTOLOAD { shift; print "NullLogger: ", @_, $/ }
+sub DESTROY { 1 }
+}
+
+sub _init_logger
+	{
+	my $log4perl_loaded = eval "require Log::Log4perl; 1";
+	
+	return Local::Null::Logger->new unless $log4perl_loaded;
+	
+	my $LEVEL = 'INFO';
+	
+	Log::Log4perl::init( \ <<"HERE" );
+log4perl.rootLogger=$LEVEL, A1
+log4perl.appender.A1=Log::Log4perl::Appender::Screen
+log4perl.appender.A1.layout=PatternLayout
+log4perl.appender.A1.layout.ConversionPattern=%m%n
+HERE
+	
+	my $logger = Log::Log4perl->get_logger( 'App::Cpan' );
+	}
+	
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
@@ -375,9 +410,9 @@ sub _default
 	
 	foreach my $arg ( @$args ) 
 		{		
-		_clear_scalar();
+		_clear_cpanpm_output();
 		CPAN::Shell->$method( $arg );
-		my $output = _get_scalar();
+		my $output = _get_cpanpm_output();
 
 		my @lines = split /\n/, $output;
 		$errors = grep { /NOT OK/ } @lines;
@@ -397,7 +432,7 @@ so I can find out what happened.
 =cut
 
 {
-my( $fh, $scalar );
+my( $fh, $scalar ) = ( undef, '' );
 
 sub _hook_into_CPANpm_report
 	{
@@ -413,32 +448,34 @@ sub _hook_into_CPANpm_report
 	
 	*CPAN::Shell::report_fh = sub { $fh };
 	
+	$logger->debug( "CPAN.pm output: $scalar" );
+	
 	return ( $fh, $scalar ); 
 	}
 	
-sub _clear_scalar { $scalar = '' }
+sub _clear_cpanpm_output { $scalar = '' }
 	
-sub _get_scalar   { $scalar }
+sub _get_cpanpm_output   { $scalar }
 }
 
 sub _print_help
 	{
-	print STDERR "Use perldoc to read the documentation\n";
+	$logger->info( "Use perldoc to read the documentation" );
 	exec "perldoc $0";
 	}
 	
 sub _print_version
 	{
-	print STDERR "$0 script version $VERSION, CPAN.pm version " . 
-		CPAN->VERSION . "\n";
+	$logger->info( 
+		"$0 script version $VERSION, CPAN.pm version " . CPAN->VERSION );
 
 	return HEY_IT_WORKED;
 	}
 	
 sub _create_autobundle
 	{
-	print "Creating autobundle in ", $CPAN::Config->{cpan_home},
-		"/Bundle\n";
+	$logger->info( 
+		"Creating autobundle in $CPAN::Config->{cpan_home}/Bundle" );
 
 	CPAN::Shell->autobundle;
 
@@ -447,7 +484,7 @@ sub _create_autobundle
 
 sub _recompiling
 	{
-	print "Recompiling dynamically-loaded extensions\n";
+	$logger->info( "Recompiling dynamically-loaded extensions" );
 
 	CPAN::Shell->recompile;
 
@@ -461,7 +498,7 @@ sub _load_config # -j
 	# should I clear out any existing config here?
 	$CPAN::Config = {};
 	delete $INC{'CPAN/Config.pm'};
-	die( "Config file [$file] does not exist!\n" ) unless -e $file;
+	croak( "Config file [$file] does not exist!\n" ) unless -e $file;
 	
 	my $rc = eval "require '$file'";
 
@@ -471,7 +508,7 @@ sub _load_config # -j
 	# CPAN::HandleConfig::load looks for this
 	$CPAN::Config_loaded = 'fake out';
 	
-	die( "Could not load [$file]: $@\n") unless $rc;
+	croak( "Could not load [$file]: $@\n") unless $rc;
 	
 	return HEY_IT_WORKED;
 	}
@@ -479,7 +516,7 @@ sub _load_config # -j
 sub _dump_config
 	{
 	my $args = shift;
-	use Data::Dumper;
+	require Data::Dumper;
 	
 	my $fh = $args->[0] || \*STDOUT;
 		
@@ -496,8 +533,6 @@ sub _dump_config
 sub _download
 	{	
 	my $args = shift;
-	use Carp qw(cluck);
-	#Carp::cluck( "Here I am" );
 	
 	local $CPAN::DEBUG = 1;
 	
@@ -505,10 +540,10 @@ sub _download
 	
 	foreach my $module ( @$args )
 		{
-		print "Checking $module\n";
+		$logger->info( "Checking $module" );
 		my $path = CPAN::Shell->expand( "Module", $module )->cpan_file;
 		
-		print "Inst file would be $path\n";
+		$logger->debug( "Inst file would be $path\n" );
 		
 		$paths{$module} = _get_file( _make_path( $path ) );
 		}
@@ -522,19 +557,19 @@ sub _get_file
 	{
 	my $path = shift;
 	
-	use Cwd;
-	use File::Spec::Functions;
-	use LWP::Simple qw(getstore);
+	my $loaded = eval { require LWP::Simple; 1; };
+	croak "You need LWP::Simple to use features that fetch files from CPAN\n"
+		unless $loaded;
 	
 	my $file = substr $path, rindex( $path, '/' ) + 1;
 	my $store_path = catfile( cwd(), $file );
-	print "Store path is $store_path\n";
+	$logger->debug( "Store path is $store_path" );
 
 	foreach my $site ( @{ $CPAN::Config->{urllist} } )
 		{
 		my $fetch_path = join "/", $site, $path;
-		print "Trying $fetch_path\n";
-	    last if getstore( $fetch_path, $store_path );
+		$logger->debug( "Trying $fetch_path" );
+	    last if LWP::Simple::getstore( $fetch_path, $store_path );
 		}
 
 	return $store_path;
@@ -544,18 +579,19 @@ sub _gitify
 	{
 	my $args = shift;
 	
-	require Archive::Extract;
-	use File::Basename;
+	my $loaded = eval { require Archive::Extract; 1; };
+	croak "You need Archive::Extract to use features that gitify distributions\n"
+		unless $loaded;
 	
-	my $starting_dir = cwd;
+	my $starting_dir = cwd();
 	
 	foreach my $module ( @$args )
 		{
-		print "Checking $module\n";
+		$logger->info( "Checking $module" );
 		my $path = CPAN::Shell->expand( "Module", $module )->cpan_file;
 
 		my $store_paths = _download( [ $module ] );
-		print "gitify Store path is $store_paths->{$module}\n";
+		$logger->debug( "gitify Store path is $store_paths->{$module}" );
 		my $dirname = dirname( $store_paths->{$module} );	
 	
 		my $ae = Archive::Extract->new( archive => $store_paths->{$module} );
@@ -563,8 +599,14 @@ sub _gitify
 		
 		chdir $ae->extract_path;
 		
+		my $git = $ENV{GIT_COMMAND} || '/usr/local/bin/git';
+		croak "Could not find $git"    unless -e $git;
+		croak "$git is not executable" unless -x $git;
+		
 		# can we do this in Pure Perl?
-		system( "git init; git add .; git commit -a -m 'initial import'" );
+		system( $git, 'init'    );
+		system( $git, qw( add . ) );
+		system( $git, qw( commit -a -m ), 'initial import' );
 		}
 	
 	chdir $starting_dir;
@@ -578,10 +620,12 @@ sub _show_Changes
 	
 	foreach my $arg ( @$args )
 		{
-		print "Checking $arg\n";
-		my $module = CPAN::Shell->expand( "Module", $arg );
+		$logger->info( "Checking $arg\n" );
 		
-		next unless $module->inst_file;
+		my $module = eval { CPAN::Shell->expand( "Module", $arg ) };
+		my $out = _get_cpanpm_output();
+		
+		next unless eval { $module->inst_file };
 		#next if $module->uptodate;
 	
 		( my $id = $module->id() ) =~ s/::/\-/;
@@ -598,21 +642,22 @@ sub _show_Changes
 	
 sub _get_changes_file
 	{
-	die "Reading Changes files requires LWP::Simple and URI\n"
-		unless eval { require LWP::Simple; require URI; };
+	croak "Reading Changes files requires LWP::Simple and URI\n"
+		unless eval { require LWP::Simple; require URI; 1 };
 	
     my $url = shift;
 
     my $content = LWP::Simple::get( $url );
-    print "Got $url ...\n" if defined $content;
+    $logger->info( "Got $url ..." ) if defined $content;
 	#print $content;
 	
 	my( $change_link ) = $content =~ m|<a href="(.*?)">Changes</a>|gi;
 	
 	my $changes_url = URI->new_abs( $change_link, $url );
- 	#print "change link is: $changes_url\n";
+ 	$logger->debug( "Change link is: $changes_url" );
+
 	my $changes =  LWP::Simple::get( $changes_url );
-	#print "change text is: " . $change_link->text() . "\n";
+
 	print $changes;
 
 	return HEY_IT_WORKED;
@@ -627,7 +672,7 @@ sub _show_Author
 		my $module = CPAN::Shell->expand( "Module", $arg );
 		unless( $module )
 			{
-			print "Didn't find a $arg module, so no author!";
+			$logger->info( "Didn't find a $arg module, so no author!" );
 			next;
 			}
 			
@@ -835,6 +880,13 @@ not control. For now, the exit codes are vague:
 	8	A module failed to install
 
 =head1 TO DO
+
+* There is initial support for Log4perl if it is available, but I
+haven't gone through everything to make the NullLogger work out
+correctly if Log4perl is not installed.
+
+* When I capture CPAN.pm output, I need to check for errors and
+report them to the user.
 
 =head1 BUGS
 
