@@ -12,7 +12,6 @@ t/mock.t
 t/pod.t
 t/pod_coverage.t
 t/process_options.t
-t/process_setup_options.t
 t/return_values.t
 t/test_manifest
 test-mirror/authors/01mailrc.txt.gz

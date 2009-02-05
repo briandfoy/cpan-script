@@ -19,9 +19,10 @@ is( CPAN::shell(), 1, "Mock shell returns 1" );
 {
 local @ARGV = ();
 
-
+# not yet tested
 }
 
+}
 
 
 __END__

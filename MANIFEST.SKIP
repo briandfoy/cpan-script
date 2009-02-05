@@ -18,3 +18,5 @@ cpan-.*
 TO_DO
 test-mirror/authors/id/B/BU/BUSTER/.*(Fails|OS|Fine)/
 cpan-home
+process_setup_options.t
+App-.*
