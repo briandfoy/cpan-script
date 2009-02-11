@@ -1,4 +1,4 @@
-#!env perl
+#!/usr/local/bin/perl
 use strict;
 use vars qw($VERSION);
 
