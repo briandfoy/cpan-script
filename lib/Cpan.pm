@@ -170,12 +170,19 @@ use File::Basename;
 use Getopt::Std;
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+# Internal constants
+use constant TRUE  => 1;
+use constant FALSE => 0;
+
+
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 # The return values
 use constant HEY_IT_WORKED              =>   0; 
 use constant I_DONT_KNOW_WHAT_HAPPENED  =>   1; # 0b0000_0001
 use constant ITS_NOT_MY_FAULT           =>   2;
 use constant THE_PROGRAMMERS_AN_IDIOT   =>   4;
 use constant A_MODULE_FAILED_TO_INSTALL =>   8;
+
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 # set up the order of options that we layer over CPAN::Shell
@@ -412,10 +419,8 @@ sub _default
 		{		
 		_clear_cpanpm_output();
 		CPAN::Shell->$method( $arg );
-		my $output = _get_cpanpm_output();
 
-		my @lines = split /\n/, $output;
-		$errors = grep { /NOT OK/ } @lines;
+		$errors += defined _cpanpm_output_indicates_failure();
 		}
 
 	$errors ? I_DONT_KNOW_WHAT_HAPPENED : HEY_IT_WORKED;
@@ -432,32 +437,68 @@ so I can find out what happened.
 =cut
 
 {
-my( $fh, $scalar ) = ( undef, '' );
+my $scalar = '';
 
 sub _hook_into_CPANpm_report
 	{
-	if( defined $fh ) { return ( $fh, $scalar ) }
-	
-	require CPAN;
-	
-	$CPAN::Be_Silent = 1;
-	
-	open $fh, ">", \ $scalar;
-	
 	no warnings 'redefine';
 	
-	*CPAN::Shell::report_fh = sub { $fh };
-	
-	$logger->debug( "CPAN.pm output: $scalar" );
-	
-	return ( $fh, $scalar ); 
+	*CPAN::Shell::myprint = sub {
+    	my($self,$what) = @_;
+		$scalar .= $what;
+    	$self->print_ornamented($what,
+			$CPAN::Config->{colorize_print}||'bold blue on_white',
+			);
+		};
+
+	*CPAN::Shell::mywarn = sub {
+		my($self,$what) = @_;
+		$scalar .= $what;
+		$self->print_ornamented($what, 
+			$CPAN::Config->{colorize_warn}||'bold red on_white'
+			);
+		};
+
 	}
 	
 sub _clear_cpanpm_output { $scalar = '' }
 	
 sub _get_cpanpm_output   { $scalar }
+
+sub _get_cpanpm_last_line
+	{
+	open my($fh), "<", \ $scalar;
+	( <$fh> )[-1];
+	}
+
+sub _cpanpm_output_indicates_failure
+	{
+	my $last_line = _get_cpanpm_last_line();
+	
+	my $result = $last_line =~ /\b(?:Error|stop|problems?|force|not|unsupported|fail)\b/i;
+	$result || ();
+	}
+	
+sub _cpanpm_output_indicates_success
+	{
+	my $last_line = _get_cpanpm_last_line();
+	
+	my $result = $last_line =~ /\b(?:\s+-- OK|PASS)\b/;
+	$result || ();
+	}
+	
+sub _cpanpm_output_is_vague
+	{
+	return FALSE if 
+		_cpanpm_output_indicates_failure() || 
+		_cpanpm_output_indicates_success();
+
+	return TRUE;
+	}
+
 }
 
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 sub _print_help
 	{
 	$logger->info( "Use perldoc to read the documentation" );
