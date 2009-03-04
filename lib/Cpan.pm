@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use vars qw($VERSION);
 
-$VERSION = '1.56_04';
+$VERSION = '1.56_05';
 
 =head1 NAME
 
@@ -310,46 +310,46 @@ failure. See the section on EXIT CODES for details on the values.
 my $logger;
 
 sub run
-	{
-	my $class = shift;
-	
-	my $return_value = HEY_IT_WORKED; # assume that things will work
-	
-	$logger = $class->_init_logger;
-	$logger->debug( "Using logger from @{[ref $logger]}" );
-	
-	$class->_hook_into_CPANpm_report;
-	
-	$class->_stupid_interface_hack_for_non_rtfmers;
-	
-	my $options = $class->_process_options;
-	
-	$class->_process_setup_options( $options );
-	
-	OPTION: foreach my $option ( @option_order )
-		{	
-		next unless $options->{$option};
+        {
+        my $class = shift;
+    
+        my $return_value = HEY_IT_WORKED; # assume that things will work
+    
+        $logger = $class->_init_logger;
+        $logger->debug( "Using logger from @{[ref $logger]}" );
+    
+        $class->_hook_into_CPANpm_report;
+    
+        $class->_stupid_interface_hack_for_non_rtfmers;
+    
+	    my $options = $class->_process_options;
+    
+	    $class->_process_setup_options( $options );
+    
+	    OPTION: foreach my $option ( @option_order )
+		        {	
+		        next unless $options->{$option};
 
-		my( $sub, $takes_args, $description ) = 
-			map { $Method_table{$option}[ $Method_table_index{$_} ] }
-			qw( code takes_args );
-			
-		unless( ref $sub eq ref sub {} )
-			{
-			$return_value = THE_PROGRAMMERS_AN_IDIOT;
-			last OPTION;
-			}
-		
-		$logger->info( "$description -- ignoring other arguments" )
-			if( @ARGV && ! $takes_args );
-			
-		$return_value = $sub->( \ @ARGV, $options );
-		
-		last;
-		}
+		        my( $sub, $takes_args, $description ) = 
+		            map { $Method_table{$option}[ $Method_table_index{$_} ] }
+		            qw( code takes_args );
+    
+		        unless( ref $sub eq ref sub {} )
+		            {
+		            $return_value = THE_PROGRAMMERS_AN_IDIOT;
+		            last OPTION;
+		            }
+    
+		        $logger->info( "$description -- ignoring other arguments" )
+		            if( @ARGV && ! $takes_args );
+                
+		        $return_value = $sub->( \ @ARGV, $options );
 
-	return $return_value;
-	}
+		        last;
+		        }
+
+	    return $return_value;
+	    }
 
 {
 package Local::Null::Logger;
@@ -471,13 +471,21 @@ sub _get_cpanpm_output   { $scalar }
 sub _get_cpanpm_last_line
 	{
 	open my($fh), "<", \ $scalar;
-	( <$fh> )[-1];
+	
+        my @lines = <$fh>;
+        
+        LOOP: {
+        last LOOP unless $lines[-1] =~ m/^\QWarning (usually harmless)/;
+        pop @lines;
+        redo LOOP;
+        }
+        
+        $lines[-1];
 	}
 
 sub _cpanpm_output_indicates_failure
 	{
 	my $last_line = _get_cpanpm_last_line();
-	
 	my $result = $last_line =~ /\b(?:Error|stop|problems?|force|not|unsupported|fail)\b/i;
 	$result || ();
 	}

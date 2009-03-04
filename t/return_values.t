@@ -10,7 +10,7 @@ my $command     = catfile qw( blib script cpan );
 my $config_file = catfile qw( t lib CPAN Config.pm );
 
 # Ensure the script is there and ready to run
-ok( -x $command, "$command is executable" ) || 
+ok( -e $command, "$command is there" ) || 
 	BAIL_OUT( "Can't continue without script" );
 ok( ! system( $^X, '-Mblib', '-c', $command ), "$command compiles" ) ||
 		BAIL_OUT( "Can't continue if script won't compile" );
@@ -49,7 +49,7 @@ foreach my $trial ( @trials )
 	my $rc = do {
 		local *STDERR;
 		open STDERR, ">", devnull();
-		system $^X, $command, @config, @$options;
+		system $^X, '-Mblib', $command, @config, @$options;
 		};
 		
 	my $exit_value = $rc >> 8;
