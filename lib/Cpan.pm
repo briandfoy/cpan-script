@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use vars qw($VERSION);
 
-$VERSION = '1.56_03';
+$VERSION = '1.56_04';
 
 =head1 NAME
 
@@ -400,8 +400,8 @@ sub _default
 	# 1. with no switches, but arguments, use the default switch (install)
 	# 2. with no switches and no args, start the shell
 	# 3. With a switch but no args, die! These switches need arguments.
-	   if( not $switch and     @$args ) { $switch = $Default;     }
-	elsif( not $switch and not @$args ) { CPAN::shell(); return   }
+	   if( not $switch and     @$args ) { $switch = $Default;  }
+	elsif( not $switch and not @$args ) { return CPAN::shell() }
 	elsif(     $switch and not @$args )
 		{ die "Nothing to $CPAN_METHODS{$switch}!\n"; }
 
@@ -410,7 +410,10 @@ sub _default
 	die "CPAN.pm cannot $method!\n" unless CPAN::Shell->can( $method );
 
 	# call the CPAN::Shell method, with force if specified
-	my $use_the_force =  $options->{f};
+	my $action = do {
+		if( $options->{f} ) { sub { CPAN::Shell->force( $method, @_ ) } }
+		else                { sub { CPAN::Shell->$method( @_ )        } }
+		};
 	
 	# How do I handle exit codes for multiple arguments?
 	my $errors = 0;
@@ -418,7 +421,7 @@ sub _default
 	foreach my $arg ( @$args ) 
 		{		
 		_clear_cpanpm_output();
-		CPAN::Shell->$method( $arg );
+		$action->( $arg );
 
 		$errors += defined _cpanpm_output_indicates_failure();
 		}
@@ -598,7 +601,7 @@ sub _get_file
 	{
 	my $path = shift;
 	
-	my $loaded = eval { require LWP::Simple; 1; };
+	my $loaded = eval "require LWP::Simple; 1;";
 	croak "You need LWP::Simple to use features that fetch files from CPAN\n"
 		unless $loaded;
 	
@@ -620,7 +623,7 @@ sub _gitify
 	{
 	my $args = shift;
 	
-	my $loaded = eval { require Archive::Extract; 1; };
+	my $loaded = eval "require Archive::Extract; 1;";
 	croak "You need Archive::Extract to use features that gitify distributions\n"
 		unless $loaded;
 	
@@ -684,7 +687,7 @@ sub _show_Changes
 sub _get_changes_file
 	{
 	croak "Reading Changes files requires LWP::Simple and URI\n"
-		unless eval { require LWP::Simple; require URI; 1 };
+		unless eval "require LWP::Simple; require URI; 1";
 	
     my $url = shift;
 

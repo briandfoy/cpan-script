@@ -8,3 +8,4 @@ is( CPAN::shell(), 1, "Mock shell returns 1" );
 is( exit(), 23, "Mock exit does not exit" );
 
 pass( "Got past the exit" );
+

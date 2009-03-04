@@ -3,7 +3,7 @@ use strict;
 use vars qw($VERSION);
 
 use App::Cpan;
-$VERSION = '1.56_03';
+$VERSION = '1.56_04';
 
 my $rc = App::Cpan->run( @ARGV );
 
@@ -29,6 +29,12 @@ cpan - easily interact with CPAN from the command line
 	# without arguments, starts CPAN.pm shell
 	cpan
 
+	# dump the configuration
+	cpan -J
+	
+	# load a different configuration to install Module::Foo
+	cpan -j some/other/file Module::Foo
+	
 	# without arguments, but some switches
 	cpan [-ahrvACDlLO]
 

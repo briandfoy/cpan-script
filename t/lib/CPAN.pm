@@ -13,5 +13,12 @@ sub CPAN::HandleConfig::load {
 	print "Loading config\n";
 	}
 
-
+sub CPAN::Shell::install {
+	return 'install';
+	}
+	
+sub CPAN::Shell::force {
+	return 'force';
+	}
+	
 1;
