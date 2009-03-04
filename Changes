@@ -1,5 +1,8 @@
 $Id$
 
+1.56_04 - Wed Mar  4 04:25:52 2009
+	* force() disappeared, and now it's back
+
 1.56_01 - Wed Feb  4 13:49:07 2009
 	* The cpan(1) client now exits with a non-zero value if it thinks
 	there were errors in the operation. I haven't tracked down every
