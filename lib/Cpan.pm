@@ -349,7 +349,7 @@ sub run
 		        }
 
 	    return $return_value;
-	    }
+	     }
 
 {
 package Local::Null::Logger;
@@ -468,6 +468,11 @@ sub _clear_cpanpm_output { $scalar = '' }
 	
 sub _get_cpanpm_output   { $scalar }
 
+my @skip_lines = (
+	qr/^\QWarning (usually harmless)/,
+	qr/\bwill not store persistent\b/,
+	);
+
 sub _get_cpanpm_last_line
 	{
 	open my($fh), "<", \ $scalar;
@@ -475,7 +480,7 @@ sub _get_cpanpm_last_line
         my @lines = <$fh>;
         
         LOOP: {
-        last LOOP unless $lines[-1] =~ m/^\QWarning (usually harmless)/;
+        last LOOP unless grep $lines[-1] =~ m/$_/, @skip_lines;
         pop @lines;
         redo LOOP;
         }
