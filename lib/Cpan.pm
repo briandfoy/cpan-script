@@ -325,48 +325,6 @@ failure. See the section on EXIT CODES for details on the values.
 my $logger;
 
 sub run
-<<<<<<< HEAD:lib/Cpan.pm
-        {
-        my $class = shift;
-    
-        my $return_value = HEY_IT_WORKED; # assume that things will work
-    
-        $logger = $class->_init_logger;
-        $logger->debug( "Using logger from @{[ref $logger]}" );
-    
-        $class->_hook_into_CPANpm_report;
-    
-        $class->_stupid_interface_hack_for_non_rtfmers;
-    
-	    my $options = $class->_process_options;
-    
-	    $class->_process_setup_options( $options );
-    
-	    OPTION: foreach my $option ( @option_order )
-		        {	
-		        next unless $options->{$option};
-
-		        my( $sub, $takes_args, $description ) = 
-		            map { $Method_table{$option}[ $Method_table_index{$_} ] }
-		            qw( code takes_args );
-    
-		        unless( ref $sub eq ref sub {} )
-		            {
-		            $return_value = THE_PROGRAMMERS_AN_IDIOT;
-		            last OPTION;
-		            }
-    
-		        $logger->info( "$description -- ignoring other arguments" )
-		            if( @ARGV && ! $takes_args );
-                
-		        $return_value = $sub->( \ @ARGV, $options );
-
-		        last;
-		        }
-
-	    return $return_value;
-	     }
-=======
 	{
 	my $class = shift;
 
@@ -407,7 +365,6 @@ sub run
 
 	return $return_value;
 	}
->>>>>>> 2d2efc6855f4c887981edf7b33e345d6b4ee9884:lib/Cpan.pm
 
 {
 package Local::Null::Logger;
@@ -535,17 +492,6 @@ sub _get_cpanpm_last_line
 	{
 	open my($fh), "<", \ $scalar;
 	
-<<<<<<< HEAD:lib/Cpan.pm
-        my @lines = <$fh>;
-        
-        LOOP: {
-        last LOOP unless grep $lines[-1] =~ m/$_/, @skip_lines;
-        pop @lines;
-        redo LOOP;
-        }
-        
-        $lines[-1];
-=======
 	my @lines = <$fh>;
 	
 	LOOP: {
@@ -555,7 +501,6 @@ sub _get_cpanpm_last_line
 	}
 	
 	$lines[-1];
->>>>>>> 2d2efc6855f4c887981edf7b33e345d6b4ee9884:lib/Cpan.pm
 	}
 
 sub _cpanpm_output_indicates_failure
