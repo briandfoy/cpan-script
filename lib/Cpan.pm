@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use vars qw($VERSION);
 
-$VERSION = '1.56_05';
+$VERSION = '1.56_06';
 
 =head1 NAME
 
@@ -462,16 +462,16 @@ sub _hook_into_CPANpm_report
 	no warnings 'redefine';
 	
 	*CPAN::Shell::myprint = sub {
-    	my($self,$what) = @_;
+		my($self,$what) = @_;
 		$scalar .= $what;
-    	$self->print_ornamented($what,
+		$self->print_ornamented($what,
 			$CPAN::Config->{colorize_print}||'bold blue on_white',
 			);
 		};
 
 	*CPAN::Shell::mywarn = sub {
 		my($self,$what) = @_;
-		$scalar .= $what;
+		$scalar .= $what;   
 		$self->print_ornamented($what, 
 			$CPAN::Config->{colorize_warn}||'bold red on_white'
 			);
@@ -486,6 +486,8 @@ sub _get_cpanpm_output   { $scalar }
 my @skip_lines = (
 	qr/^\QWarning (usually harmless)/,
 	qr/\bwill not store persistent\b/,
+	qr(^//hint//),
+	qr/^\s+reports\s+/,
 	);
 
 sub _get_cpanpm_last_line
