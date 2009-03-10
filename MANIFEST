@@ -5,6 +5,7 @@ Makefile.PL
 MANIFEST
 script/cpan
 t/compile.t
+t/cpanpm_output_hook.t
 t/install_hack.t
 t/lib/CPAN.pm
 t/lib/CPAN/Config.pm

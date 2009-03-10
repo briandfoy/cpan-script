@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use vars qw($VERSION);
 
-$VERSION = '1.56_04';
+$VERSION = '1.56_07';
 
 =head1 NAME
 
@@ -15,7 +15,7 @@ App::Cpan - easily interact with CPAN from the command line
 	cpan module_name [ module_name ... ]
 
 	# with switches, installs modules with extra behavior
-	cpan [-cfimt] module_name [ module_name ... ]
+	cpan [-cfFimt] module_name [ module_name ... ]
 
 	# with just the dot, install from the distribution in the
 	# current directory
@@ -33,26 +33,25 @@ This script provides a command interface (not a shell) to CPAN. At the
 moment it uses CPAN.pm to do the work, but it is not a one-shot command
 runner for CPAN.pm.
 
-=head2 Meta Options
-
-These options are mutually exclusive, and the script processes them in
-this order: [hvCAar].  Once the script finds one, it ignores the others,
-and then exits after it finishes the task.  The script ignores any other
-command line options.
+=head2 Options
 
 =over 4
 
 =item -a
 
-Creates the CPAN.pm autobundle with CPAN::Shell->autobundle.
+Creates a CPAN.pm autobundle with CPAN::Shell->autobundle.
 
 =item -A module [ module ... ]
 
-Shows the primary maintainers for the specified modules
+Shows the primary maintainers for the specified modules.
+
+=item -c module
+
+Runs a `make clean` in the specified module's directories.
 
 =item -C module [ module ... ]
 
-Show the C<Changes> files for the specified modules
+Show the F<Changes> files for the specified modules
 
 =item -D module [ module ... ]
 
@@ -60,6 +59,21 @@ Show the module details. This prints one line for each out-of-date module
 (meaning, modules locally installed but have newer versions on CPAN).
 Each line has three columns: module name, local version, and CPAN
 version.
+
+=item -f
+
+Force the specified action, when it normally would have failed. Use this
+to install a module even if its tests fail. When you use this option,
+-i is not optional for installing a module when you need to force it:
+
+	% cpan -f -i Module::Foo
+
+=item -F
+
+Turn off CPAN.pm's attempts to lock anything. You should be careful with 
+this since you might end up with multiple scripts trying to muck in the
+same directory. This isn't so much of a concern if you're loading a special
+config with C<-j>, and that config sets up its own work directories.
 
 =item -g module [ module ... ]
 
@@ -69,9 +83,21 @@ Downloads to the current directory the latest distribution of the module.
 
 UNIMPLEMENTED
 
-Downloads to the current directory the latest distribution of the
-module, unpack each distribution, and create a git repository for each
+Download to the current directory the latest distribution of the
+modules, unpack each distribution, and create a git repository for each
 distribution.
+
+If you want this feature, check out Yanick Champoux's C<Git::CPAN::Patch>
+distribution.
+
+=item -h
+
+Print a help message and exit. When you specify C<-h>, it ignores all
+of the other options and arguments.
+
+=item -i
+
+Install the specified modules.
 
 =item -j Config.pm
 
@@ -81,19 +107,25 @@ C<$CPAN::Config> as an anonymous hash.
 
 =item -J
 
-Dump the configuration in the same format that CPAN.pm uses.
+Dump the configuration in the same format that CPAN.pm uses. This is useful
+for checking the configuration as well as using the dump as a starting point
+for a new, custom configuration.
 
 =item -L author [ author ... ]
 
 List the modules by the specified authors.
 
-=item -h
+=item -m
 
-Prints a help message.
+Make the specified modules.
 
 =item -O
 
 Show the out-of-date modules.
+
+=item -t
+
+Run a `make test` on the specified modules.
 
 =item -r
 
@@ -101,36 +133,7 @@ Recompiles dynamically loaded modules with CPAN::Shell->recompile.
 
 =item -v
 
-Print the script version and CPAN.pm version.
-
-=back
-
-=head2 Module options
-
-These options are mutually exclusive, and the script processes them in
-alphabetical order. It only processes the first one it finds.
-
-=over 4
-
-=item c
-
-Runs a `make clean` in the specified module's directories.
-
-=item f
-
-Forces the specified action, when it normally would have failed.
-
-=item i
-
-Installed the specified modules.
-
-=item m
-
-Makes the specified modules.
-
-=item t
-
-Runs a `make test` on the specified modules.
+Print the script version and CPAN.pm version then exit.
 
 =back
 
@@ -212,13 +215,19 @@ $Default = 'default';
 # use this stuff instead of hard-coded indices and values
 %Method_table = (
 # key => [ sub ref, takes args?, exit value, description ]
+
+	# options that do their thing first, then exit
 	h =>  [ \&_print_help,        0, 0, 'Printing help'                ],
 	v =>  [ \&_print_version,     0, 0, 'Printing version'             ],
 
-	g =>  [ \&_download,          0, 0, 'Download the latest distro'   ],
-	G =>  [ \&_gitify,            0, 0, 'Down and gitify the latest distro' ],
+	# options that affect other options
 	j =>  [ \&_load_config,       1, 0, 'Use specified config file'    ],
 	J =>  [ \&_dump_config,       0, 0, 'Dump configuration to stdout' ],
+	F =>  [ \&_lock_lobotomy,     0, 0, 'Turn off CPAN.pm lock files'  ],
+
+	# options that do their one thing
+	g =>  [ \&_download,          0, 0, 'Download the latest distro'        ],
+	G =>  [ \&_gitify,            0, 0, 'Down and gitify the latest distro' ],
 	
 	C =>  [ \&_show_Changes,      1, 0, 'Showing Changes file'         ],
 	A =>  [ \&_show_Author,       1, 0, 'Showing Author'               ],
@@ -288,6 +297,12 @@ sub _process_setup_options
 			);
 		}
 		
+	if( $options->{F} )
+		{
+		$Method_table{F}[ $Method_table_index{code} ]->( $options->{F} );
+		delete $options->{F};
+		}
+
 	my $option_count = grep { $options->{$_} } @option_order;
 	no warnings 'uninitialized';
 	$option_count -= $options->{'f'}; # don't count force
@@ -312,20 +327,20 @@ my $logger;
 sub run
 	{
 	my $class = shift;
-	
+
 	my $return_value = HEY_IT_WORKED; # assume that things will work
-	
+
 	$logger = $class->_init_logger;
 	$logger->debug( "Using logger from @{[ref $logger]}" );
-	
+
 	$class->_hook_into_CPANpm_report;
-	
+
 	$class->_stupid_interface_hack_for_non_rtfmers;
-	
+
 	my $options = $class->_process_options;
-	
+
 	$class->_process_setup_options( $options );
-	
+
 	OPTION: foreach my $option ( @option_order )
 		{	
 		next unless $options->{$option};
@@ -333,18 +348,18 @@ sub run
 		my( $sub, $takes_args, $description ) = 
 			map { $Method_table{$option}[ $Method_table_index{$_} ] }
 			qw( code takes_args );
-			
+
 		unless( ref $sub eq ref sub {} )
 			{
 			$return_value = THE_PROGRAMMERS_AN_IDIOT;
 			last OPTION;
 			}
-		
+
 		$logger->info( "$description -- ignoring other arguments" )
 			if( @ARGV && ! $takes_args );
-			
-		$return_value = $sub->( \ @ARGV, $options );
 		
+		$return_value = $sub->( \ @ARGV, $options );
+
 		last;
 		}
 
@@ -447,16 +462,16 @@ sub _hook_into_CPANpm_report
 	no warnings 'redefine';
 	
 	*CPAN::Shell::myprint = sub {
-    	my($self,$what) = @_;
+		my($self,$what) = @_;
 		$scalar .= $what;
-    	$self->print_ornamented($what,
+		$self->print_ornamented($what,
 			$CPAN::Config->{colorize_print}||'bold blue on_white',
 			);
 		};
 
 	*CPAN::Shell::mywarn = sub {
 		my($self,$what) = @_;
-		$scalar .= $what;
+		$scalar .= $what;   
 		$self->print_ornamented($what, 
 			$CPAN::Config->{colorize_warn}||'bold red on_white'
 			);
@@ -468,16 +483,34 @@ sub _clear_cpanpm_output { $scalar = '' }
 	
 sub _get_cpanpm_output   { $scalar }
 
+my @skip_lines = (
+	qr/^\QWarning (usually harmless)/,
+	qr/\bwill not store persistent\b/,
+	qr(^//hint//),
+	qr/^\s+reports\s+/,
+	);
+
 sub _get_cpanpm_last_line
 	{
 	open my($fh), "<", \ $scalar;
-	( <$fh> )[-1];
+	
+	my @lines = <$fh>;
+	
+	LOOP: {
+		foreach my $regex ( @skip_lines )
+			{
+			last LOOP unless $lines[-1] =~ m/$regex/;
+			pop @lines;
+			redo LOOP;
+			}
+	}
+	
+	$lines[-1];
 	}
 
 sub _cpanpm_output_indicates_failure
 	{
 	my $last_line = _get_cpanpm_last_line();
-	
 	my $result = $last_line =~ /\b(?:Error|stop|problems?|force|not|unsupported|fail)\b/i;
 	$result || ();
 	}
@@ -574,6 +607,16 @@ sub _dump_config
 	return HEY_IT_WORKED;
 	}
 
+sub _lock_lobotomy
+	{
+	no warnings 'redefine';
+	
+	*CPAN::_flock    = sub { 1 };
+	*CPAN::checklock = sub { 1 };
+
+	return HEY_IT_WORKED;
+	}
+	
 sub _download
 	{	
 	my $args = shift;
