@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use vars qw($VERSION);
 
-$VERSION = '1.56_06';
+$VERSION = '1.56_07';
 
 =head1 NAME
 
@@ -497,9 +497,12 @@ sub _get_cpanpm_last_line
 	my @lines = <$fh>;
 	
 	LOOP: {
-	last LOOP unless $lines[-1] =~ m/^\QWarning (usually harmless)/;
-	pop @lines;
-	redo LOOP;
+		foreach my $regex ( @skip_lines )
+			{
+			last LOOP unless $lines[-1] =~ m/$regex/;
+			pop @lines;
+			redo LOOP;
+			}
 	}
 	
 	$lines[-1];
