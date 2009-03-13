@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use vars qw($VERSION);
 
-$VERSION = '1.56_07';
+$VERSION = '1.56_08';
 
 =head1 NAME
 
@@ -380,7 +380,7 @@ sub _init_logger
 	
 	return Local::Null::Logger->new unless $log4perl_loaded;
 	
-	my $LEVEL = 'INFO';
+	my $LEVEL = $ENV{CPANSCRIPT_LOGLEVEL} || 'INFO';
 	
 	Log::Log4perl::init( \ <<"HERE" );
 log4perl.rootLogger=$LEVEL, A1
@@ -389,7 +389,7 @@ log4perl.appender.A1.layout=PatternLayout
 log4perl.appender.A1.layout.ConversionPattern=%m%n
 HERE
 	
-	my $logger = Log::Log4perl->get_logger( 'App::Cpan' );
+	$logger = Log::Log4perl->get_logger( 'App::Cpan' );
 	}
 	
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
@@ -505,6 +505,8 @@ sub _get_cpanpm_last_line
 			}
 	}
 	
+    $logger->debug( "Last interesting line of CPAN.pm output is:\n\t$lines[-1]" );
+    
 	$lines[-1];
 	}
 

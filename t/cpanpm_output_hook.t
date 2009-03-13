@@ -22,6 +22,7 @@ can_ok( $class, $_ ) for (
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 $class->_hook_into_CPANpm_report;
+$class->_init_logger;
 
 {
 no warnings 'redefine';
