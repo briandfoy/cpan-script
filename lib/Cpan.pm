@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use vars qw($VERSION);
 
-$VERSION = '1.56_08';
+$VERSION = '1.56_11';
 
 =head1 NAME
 
@@ -378,7 +378,11 @@ sub _init_logger
 	{
 	my $log4perl_loaded = eval "require Log::Log4perl; 1";
 	
-	return Local::Null::Logger->new unless $log4perl_loaded;
+    unless( $log4perl_loaded )
+        {
+        $logger = Local::Null::Logger->new;
+        return $logger;
+        }
 	
 	my $LEVEL = $ENV{CPANSCRIPT_LOGLEVEL} || 'INFO';
 	
@@ -483,9 +487,10 @@ sub _clear_cpanpm_output { $scalar = '' }
 	
 sub _get_cpanpm_output   { $scalar }
 
+BEGIN {
 my @skip_lines = (
-	qr/^\QWarning (usually harmless)/,
-	qr/\bwill not store persistent\b/,
+	qr/^\QWarning \(usually harmless\)/,
+	qr/\bwill not store persistent state\b/,
 	qr(^//hint//),
 	qr/^\s+reports\s+/,
 	);
@@ -496,19 +501,16 @@ sub _get_cpanpm_last_line
 	
 	my @lines = <$fh>;
 	
-	LOOP: {
-		foreach my $regex ( @skip_lines )
-			{
-			last LOOP unless $lines[-1] =~ m/$regex/;
-			pop @lines;
-			redo LOOP;
-			}
-	}
+	foreach my $regex ( @skip_lines )
+		{
+		pop @lines if $lines[-1] =~ m/$regex/;
+		}
 	
     $logger->debug( "Last interesting line of CPAN.pm output is:\n\t$lines[-1]" );
     
 	$lines[-1];
 	}
+}
 
 sub _cpanpm_output_indicates_failure
 	{

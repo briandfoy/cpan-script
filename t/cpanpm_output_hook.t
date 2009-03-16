@@ -2,7 +2,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 52;
+use Test::More tests => 59;
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 my $CPAN = 'CPAN::Shell';
@@ -11,6 +11,7 @@ my $class = 'App::Cpan';
 use_ok( $class );
 can_ok( $class, $_ ) for (
 	'_hook_into_CPANpm_report',
+	'_init_logger',
 	'_clear_cpanpm_output',
 	'_get_cpanpm_output',
 	'_get_cpanpm_last_line',
@@ -81,6 +82,8 @@ my @lines = ( # -1 is vague, 0 is failure, 1 is success
 	[ 0, "  make test had returned bad status, won\'t install without force" ],
 	[ 0, "  Make had some problems, won\'t install" ],
 
+	[ 1, "  /usr/bin/make install  -- OK\n, will not store persistent state",   "  /usr/bin/make install  -- OK\n" ],
+	[ 1, "  /usr/bin/make install  -- OK\n//hint// Don't do that!",   "  /usr/bin/make install  -- OK\n" ],
 	[ 1, 'Result: PASS' ],
 	[ 1, "  /usr/bin/make install  -- OK" ],
 	);
@@ -89,12 +92,14 @@ _clear();
 
 foreach my $pair ( @lines )
 	{
-	my( $rc, $message ) = @$pair;
+	my( $rc, $message, $last_good_line ) = @$pair;
+	$last_good_line = $message unless defined $last_good_line;
 	
-	$CPAN->myprint( "$message\n" );
+	$CPAN->_clear_cpanpm_output;
+	$CPAN->myprint( $message );
 	
 	my $last_line = $class->_get_cpanpm_last_line();
-	is( $last_line, "$message\n", 'Last line is last message' );
+	is( $last_line, $last_good_line, 'Last line is last message' );
 	
 	is( $class->_cpanpm_output_indicates_failure, $rc ? undef : 1, 
 		"[$message] failure?" );
