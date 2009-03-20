@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use vars qw($VERSION);
 
-$VERSION = '1.56_11';
+$VERSION = '1.56_12';
 
 =head1 NAME
 
@@ -167,6 +167,7 @@ Print the script version and CPAN.pm version then exit.
 use autouse Carp => qw(carp croak cluck);
 use CPAN ();
 use autouse Cwd => qw(cwd);
+use autouse 'Data::Dumper' => qw(Dumper);
 use File::Spec::Functions;
 use File::Basename;
 
@@ -334,10 +335,13 @@ sub run
 	$logger->debug( "Using logger from @{[ref $logger]}" );
 
 	$class->_hook_into_CPANpm_report;
+	$logger->debug( "Hooked into output" );
 
 	$class->_stupid_interface_hack_for_non_rtfmers;
+	$logger->debug( "Patched cargo culting" );
 
 	my $options = $class->_process_options;
+	$logger->debug( "Options are @{[Dumper($options)]}" );
 
 	$class->_process_setup_options( $options );
 
@@ -491,7 +495,7 @@ BEGIN {
 my @skip_lines = (
 	qr/^\QWarning \(usually harmless\)/,
 	qr/\bwill not store persistent state\b/,
-	qr(^//hint//),
+	qr(//hint//),
 	qr/^\s+reports\s+/,
 	);
 
@@ -501,11 +505,20 @@ sub _get_cpanpm_last_line
 	
 	my @lines = <$fh>;
 	
+    # This is a bit ugly. Once we examine a line, we have to
+    # examine the line before it and go through all of the same
+    # regexes. I could do something fancy, but this works.
+    REGEXES: {
 	foreach my $regex ( @skip_lines )
 		{
-		pop @lines if $lines[-1] =~ m/$regex/;
+		if( $lines[-1] =~ m/$regex/ )
+            {
+            pop @lines;
+            redo REGEXES; # we have to go through all of them for every line!
+            }
 		}
-	
+    }
+    
     $logger->debug( "Last interesting line of CPAN.pm output is:\n\t$lines[-1]" );
     
 	$lines[-1];

@@ -2,6 +2,8 @@
 use strict;
 use warnings;
 
+$|++;
+
 use Test::More tests => 10;
 
 use File::Spec::Functions qw(catfile devnull);
@@ -36,7 +38,7 @@ diag( <<"HERE" );
 =================================================================
 You're going to see a mess of output. This is normal and it comes
 from the external process I am testing. I'm intentionally trying
-to install modules that will fail.
+to install modules that will fail. I'll tell you when I'm done.
 =================================================================
 
 
@@ -56,3 +58,14 @@ foreach my $trial ( @trials )
 	
 	is( $exit_value, $expected_exit_value, "$command @config @$options" );
 	}
+
+diag( <<"HERE" );
+
+
+
+=================================================================
+I'm done. Any further messes you see are real errors.
+=================================================================
+
+
+HERE

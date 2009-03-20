@@ -2,7 +2,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 59;
+use Test::More tests => 60;
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 my $CPAN = 'CPAN::Shell';
@@ -109,6 +109,25 @@ foreach my $pair ( @lines )
 	
 
 _clear();
+}
+
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+{
+my $message = <<'HERE';
+Result: FAIL
+  D:/Workspace/CI/DRW-Perl/DRW-Module-Build/distributions/DRW-Module-Build/.
+  C:\strawberry\\perl\\bin\\perl.exe ./Build test -- NOT OK
+//hint// to see the cpan-testers results for installing this module, try:
+  reports D:/Workspace/CI/DRW-Perl/DRW-Module-Build/distributions/DRW-Module-Build/.
+Directory 'D:/Workspace/CI/DRW-Perl/DRW-Module-Build/distributions/DRW-Module-Build/.' not below D:\Workspace\drwperl\build, will not store persistent state
+HERE
+
+$CPAN->_clear_cpanpm_output;
+$CPAN->myprint( $message );
+
+my $last_line = $class->_get_cpanpm_last_line();
+like( $last_line, qr/NOT OK/, 'Last line is NOT OK line' );
+
 }
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
