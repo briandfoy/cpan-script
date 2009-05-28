@@ -576,7 +576,7 @@ sub _create_autobundle
 	return HEY_IT_WORKED;
 	}
 
-sub _recompiling
+sub _recompile
 	{
 	$logger->info( "Recompiling dynamically-loaded extensions" );
 
