@@ -239,7 +239,7 @@ $Default = 'default';
 
 	L =>  [ \&_show_author_mods,  1, 0, 'Showing author mods'          ],
 	a =>  [ \&_create_autobundle, 0, 0, 'Creating autobundle'          ],
-	r =>  [ \&_recompile,         0, 0, 'Recompiling'                  ],
+	r =>  [ \&_recompiling,       0, 0, 'Recompiling'                  ],
 
 	c =>  [ \&_default,           1, 0, 'Running `make clean`'         ],
 	f =>  [ \&_default,           1, 0, 'Installing with force'        ],
