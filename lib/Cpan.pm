@@ -525,12 +525,18 @@ sub _get_cpanpm_last_line
 	}
 }
 
+BEGIN {
+my $epic_fail_words = join '|',
+	qw( Error stop(?:ping)? problems force not unsupported fail(?:ed)? );
+	
 sub _cpanpm_output_indicates_failure
 	{
 	my $last_line = _get_cpanpm_last_line();
-	my $result = $last_line =~ /\b(?:Error|stop|problems?|force|not|unsupported|fail)\b/i;
+	
+	my $result = $last_line =~ /\b(?:$epic_fail_words)\b/i;
 	$result || ();
 	}
+}
 	
 sub _cpanpm_output_indicates_success
 	{
