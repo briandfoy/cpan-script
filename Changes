@@ -1,5 +1,11 @@
 $Id$
 
+1.56_15 - Thu Nov 12 17:39:18 2009
+	* Fixed the -l switch to list any installed module once
+	per path (total newbie bug there)
+	* Fixed -r to use the right function name
+	* Added -u switch to upgrade all modules. Be careful there!
+
 1.56_04 - Wed Mar  4 04:25:52 2009
 	* force() disappeared, and now it's back
 
