@@ -1,5 +1,3 @@
-# $Id$
-
 use Test::More;
 eval "use Test::Pod::Coverage";
 
@@ -9,5 +7,5 @@ if( $@ )
 	}
 else
 	{
-	all_pod_coverage_ok( );      
+	all_pod_coverage_ok( { also_private => [ qr/^[A-Z_]+$/ ], } );      
 	}
