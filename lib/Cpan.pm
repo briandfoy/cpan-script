@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use vars qw($VERSION);
 
-$VERSION = '1.56_14';
+$VERSION = '1.56_15';
 
 =head1 NAME
 
@@ -17,6 +17,9 @@ App::Cpan - easily interact with CPAN from the command line
 	# with switches, installs modules with extra behavior
 	cpan [-cfFimt] module_name [ module_name ... ]
 
+	# use local::lib
+	cpan -l module_name [ module_name ... ]
+	
 	# with just the dot, install from the distribution in the
 	# current directory
 	cpan .
@@ -25,7 +28,7 @@ App::Cpan - easily interact with CPAN from the command line
 	cpan
 
 	# without arguments, but some switches
-	cpan [-ahrvACDLO]
+	cpan [-ahruvACDLO]
 
 =head1 DESCRIPTION
 
@@ -111,6 +114,10 @@ Dump the configuration in the same format that CPAN.pm uses. This is useful
 for checking the configuration as well as using the dump as a starting point
 for a new, custom configuration.
 
+=item -l
+
+Use C<local::lib>.
+
 =item -L author [ author ... ]
 
 List the modules by the specified authors.
@@ -131,6 +138,11 @@ Run a `make test` on the specified modules.
 
 Recompiles dynamically loaded modules with CPAN::Shell->recompile.
 
+=item -u
+
+Upgrade all installed modules. Blindly doing this can really break things,
+so keep a backup.
+
 =item -v
 
 Print the script version and CPAN.pm version then exit.
@@ -150,6 +162,9 @@ Print the script version and CPAN.pm version then exit.
 
 	# recompile modules
 	cpan -r
+
+	# upgrade all installed modules
+	cpan -u
 
 	# install modules ( sole -i is optional )
 	cpan -i Netscape::Booksmarks Business::ISBN
@@ -205,6 +220,7 @@ $Default = 'default';
 	'i'      => 'install',
 	'm'      => 'make',
 	't'      => 'test',
+	'u'      => 'upgrade',
 	);
 @CPAN_OPTIONS = grep { $_ ne $Default } sort keys %CPAN_METHODS;
 
@@ -214,38 +230,43 @@ $Default = 'default';
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 # map switches to the subroutines in this script, along with other information.
 # use this stuff instead of hard-coded indices and values
+sub NO_ARGS   () { 0 }
+sub ARGS      () { 1 }
+sub GOOD_EXIT () { 0 }
+
 %Method_table = (
 # key => [ sub ref, takes args?, exit value, description ]
 
 	# options that do their thing first, then exit
-	h =>  [ \&_print_help,        0, 0, 'Printing help'                ],
-	v =>  [ \&_print_version,     0, 0, 'Printing version'             ],
+	h =>  [ \&_print_help,        NO_ARGS, GOOD_EXIT, 'Printing help'                ],
+	v =>  [ \&_print_version,     NO_ARGS, GOOD_EXIT, 'Printing version'             ],
 
 	# options that affect other options
-	j =>  [ \&_load_config,       1, 0, 'Use specified config file'    ],
-	J =>  [ \&_dump_config,       0, 0, 'Dump configuration to stdout' ],
-	F =>  [ \&_lock_lobotomy,     0, 0, 'Turn off CPAN.pm lock files'  ],
+	j =>  [ \&_load_config,          ARGS, GOOD_EXIT, 'Use specified config file'    ],
+	J =>  [ \&_dump_config,       NO_ARGS, GOOD_EXIT, 'Dump configuration to stdout' ],
+	F =>  [ \&_lock_lobotomy,     NO_ARGS, GOOD_EXIT, 'Turn off CPAN.pm lock files'  ],
 
 	# options that do their one thing
-	g =>  [ \&_download,          0, 0, 'Download the latest distro'        ],
-	G =>  [ \&_gitify,            0, 0, 'Down and gitify the latest distro' ],
+	g =>  [ \&_download,          NO_ARGS, GOOD_EXIT, 'Download the latest distro'        ],
+	G =>  [ \&_gitify,            NO_ARGS, GOOD_EXIT, 'Down and gitify the latest distro' ],
 	
-	C =>  [ \&_show_Changes,      1, 0, 'Showing Changes file'         ],
-	A =>  [ \&_show_Author,       1, 0, 'Showing Author'               ],
-	D =>  [ \&_show_Details,      1, 0, 'Showing Details'              ],
-	O =>  [ \&_show_out_of_date,  0, 0, 'Showing Out of date'          ],
+	C =>  [ \&_show_Changes,         ARGS, GOOD_EXIT, 'Showing Changes file'         ],
+	A =>  [ \&_show_Author,          ARGS, GOOD_EXIT, 'Showing Author'               ],
+	D =>  [ \&_show_Details,         ARGS, GOOD_EXIT, 'Showing Details'              ],
+	O =>  [ \&_show_out_of_date,  NO_ARGS, GOOD_EXIT, 'Showing Out of date'          ],
 
-	l =>  [ \&_list_all_mods,     0, 0, 'Listing all modules'          ],
+	l =>  [ \&_list_all_mods,     NO_ARGS, GOOD_EXIT, 'Listing all modules'          ],
 
-	L =>  [ \&_show_author_mods,  1, 0, 'Showing author mods'          ],
-	a =>  [ \&_create_autobundle, 0, 0, 'Creating autobundle'          ],
-	r =>  [ \&_recompiling,       0, 0, 'Recompiling'                  ],
+	L =>  [ \&_show_author_mods,     ARGS, GOOD_EXIT, 'Showing author mods'          ],
+	a =>  [ \&_create_autobundle, NO_ARGS, GOOD_EXIT, 'Creating autobundle'          ],
+	r =>  [ \&_recompile,         NO_ARGS, GOOD_EXIT, 'Recompiling'                  ],
+	u =>  [ \&_upgrade,           NO_ARGS, GOOD_EXIT, 'Running `make test`'          ],
 
-	c =>  [ \&_default,           1, 0, 'Running `make clean`'         ],
-	f =>  [ \&_default,           1, 0, 'Installing with force'        ],
-	i =>  [ \&_default,           1, 0, 'Running `make install`'       ],
-   'm' => [ \&_default,           1, 0, 'Running `make`'               ],
-	t =>  [ \&_default,           1, 0, 'Running `make test`'          ],
+	c =>  [ \&_default,              ARGS, GOOD_EXIT, 'Running `make clean`'         ],
+	f =>  [ \&_default,              ARGS, GOOD_EXIT, 'Installing with force'        ],
+	i =>  [ \&_default,              ARGS, GOOD_EXIT, 'Running `make install`'       ],
+   'm' => [ \&_default,              ARGS, GOOD_EXIT, 'Running `make`'               ],
+	t =>  [ \&_default,              ARGS, GOOD_EXIT, 'Running `make test`'          ],
 
 	);
 
@@ -591,6 +612,15 @@ sub _recompile
 	return HEY_IT_WORKED;
 	}
 
+sub _upgrade
+	{
+	$logger->info( "Upgrading all modules" );
+
+	CPAN::Shell->upgrade();
+
+	return HEY_IT_WORKED;
+	}
+
 sub _load_config # -j
 	{	
 	my $file = shift || '';
@@ -868,20 +898,21 @@ sub _list_all_mods
 	
 	my $args = shift;
 	
-	my( $wanted, $reporter ) = _generator();
 	
 	my $fh = \*STDOUT;
 	
-	foreach my $inc ( @INC )
+	INC: foreach my $inc ( @INC )
 		{		
+		my( $wanted, $reporter ) = _generator();
 		File::Find::find( { wanted => $wanted }, $inc );
 		
 		my $count = 0;
-		foreach my $file ( @{ $reporter->() } )
+		FILE: foreach my $file ( @{ $reporter->() } )
 			{
 			my $version = _parse_version_safely( $file );
 			
 			my $module_name = _path_to_module( $inc, $file );
+			next FILE unless defined $module_name;
 			
 			print $fh "$module_name\t$version\n";
 			
@@ -957,6 +988,7 @@ sub _eval_version
 sub _path_to_module
 	{
 	my( $inc, $path ) = @_;
+	return if length $path< length $inc;
 	
 	my $module_path = substr( $path, length $inc );
 	$module_path =~ s/\.pm\z//;
