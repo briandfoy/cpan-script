@@ -1,19 +1,26 @@
 #!perl
 
+use strict;
+use warnings;
+
 use 5.010;
 
-use File::Copy qw( copy );
+use Cwd                     qw( cwd );
+use File::Copy              qw( copy );
 use File::Spec::Functions;
 
 my $cpanpm_base = $ARGV[0] || '../cpanpm';
-die "Couldn't find cpanpm repository at $cpanpm_base\n";
+die "Couldn't find cpanpm repository at $cpanpm_base\n"
+	unless -d $cpanpm_base;
 
 {
-my $cwd = Cwd();
+my $cwd = cwd();
 chdir $cpanpm_base or die "Couldn't chdir to $cpanpm_base";
 
-my $branch = grep { /^\*\s*(.*)/ } `git branch`;
-die "Branch is not 'update_cpan'\n" unless $branch eq 'update_cpan';
+my( $branch ) = map { /^\*\s*(.*)/ ? $1 : () } `git branch`;
+
+#die "Branch is not 'update_cpan'\n" unless $branch eq 'update_cpan';
+print "branch is [$branch]\n";
 
 my $uptodate = ( `git pull` =~ /Already/ );
 die "Repo is not up to date! Stopping!\n" unless $uptodate;
@@ -21,15 +28,15 @@ die "Repo is not up to date! Stopping!\n" unless $uptodate;
 chdir $cwd or die "Couldn't chdir back to $cwd";
 }
 
-my @file_to_copy = (
+my @files_to_copy = (
 	[ qw( lib/Cpan.pm lib/App/Cpan.pm ) ],
 	[ qw( script/cpan scripts/cpan ) ],
 	);
 	
 foreach my $pair ( @files_to_copy ) {
 	my( $original, $copy_rel, $mode ) = @$pair;
-	
 	warn "Could not find $original\n" unless -e $original;
 	my $destination = catfile( $cpanpm_base, $copy_rel );
+	print "Copying $original -> $destination\n";
     copy( $original, $destination ) or warn "Copy failed: $!";
     }
