@@ -1,4 +1,19 @@
-$Id$
+1.57_01 - Tue Mar  1 10:41:55 CST 2011
+
+	* -I option for loading local::lib
+	* -V show extended details and check setup
+	
+	Some things only half way there:
+	
+	* -T disable testing (how am I going to do that?)
+	* -p ping the configured mirrors
+	* -P find the best mirrors
+	* -w turn on cpan warnings (permissions checks, etc)
+
+	* -o option to set CPAN config options on the command line
+
+1.57 - 
+	* Release for Perl 5.12
 
 1.56_15 - Thu Nov 12 17:39:18 2009
 	* Fixed the -l switch to list any installed module once
