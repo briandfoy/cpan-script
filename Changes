@@ -1,5 +1,9 @@
 1.57_01 - Tue Mar  1 10:41:55 CST 2011
 
+1.58 - Wed Mar 14 22:28:23 2012
+	Bump to a release version
+
+
 	* -I option for loading local::lib
 	* -V show extended details and check setup
 	
