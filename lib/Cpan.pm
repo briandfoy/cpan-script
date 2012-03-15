@@ -777,7 +777,57 @@ sub _vars {
 	installsitelib
 	);
 	}
-	
+
+sub _ping_mirrors {
+	my $urls   = $CPAN::Config->{urllist};
+	require URI;
+
+	foreach my $url ( @$urls ) {
+		my( $obj ) = URI->new( $url );
+		next unless _is_pingable_scheme( $obj );
+		my $host = $obj->host;
+		_print_ping_report( $obj );
+		}
+
+	}
+
+sub _is_pingable_scheme {
+	my( $uri ) = @_;
+
+	$uri->scheme eq 'file'
+	}
+
+sub _find_good_mirrors {
+	require CPAN::Mirrors;
+
+	my $mirrors = CPAN::Mirrors->new;
+	my $file = do {
+		my $file = 'MIRRORED.BY';
+		my $local_path = File::Spec->catfile(
+			$CPAN::Config->{keep_source_where}, $file );
+
+		if( -e $local_path ) { $local_path }
+		else {
+			require CPAN::FTP;
+			CPAN::FTP->localize( $file, $local_path, 3, 1 );
+			$local_path;
+			}
+		};
+
+	$mirrors->parse_mirrored_by( $file );
+
+	my @mirrors = $mirrors->best_mirrors(
+		how_many   => 3,
+		verbose    => 1,
+		);
+
+	foreach my $mirror ( @mirrors ) {
+		next unless eval { $mirror->can( 'http' ) };
+		_print_ping_report( $mirror->http );
+		}
+
+	}
+
 sub _print_inc_dir_report
 	{
 	my( $dir ) = shift;
@@ -791,11 +841,11 @@ sub _print_ping_report
 	{
 	my( $mirror ) = @_;
 
-	my $rtt = eval { _get_ping_report( $mirror ) };		
+	my $rtt = eval { _get_ping_report( $mirror ) };
 
-	$logger->info( 
-		sprintf "\t%s (%4d ms) %s", $rtt  ? '+' : '!',  $rtt * 1000, $mirror 
-		);	
+	$logger->info(
+		sprintf "\t%s (%4d ms) %s", $rtt  ? '+' : '!',  $rtt * 1000, $mirror
+		);
 	}
 
 sub _get_ping_report
@@ -804,15 +854,15 @@ sub _get_ping_report
 	my( $mirror ) = @_;
 	my( $url ) = ref $mirror ? $mirror : URI->new( $mirror ); #XXX
 	require Net::Ping;
-	
+
 	my $ping = Net::Ping->new( 'tcp', 1 );
 
 	if( $url->scheme eq 'file' ) {
-		return -e $url->file; 
+		return -e $url->file;
 		}
 
     my( $port ) = $url->port;
-		
+
     return unless $port;
 
     if ( $ping->can('port_number') ) {
