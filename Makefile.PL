@@ -6,7 +6,7 @@ eval "use Test::Manifest 1.21";
 
 WriteMakefile(
 	'NAME'		    => 'App::Cpan',
-	'VERSION_FROM'  => 'lib/Cpan.pm',
+	'VERSION_FROM'  => 'lib/App/Cpan.pm',
 	'ABSTRACT'      => 'Interact with CPAN from the command line',
 	'LICENSE'       => 'perl',
 	'AUTHOR'        => 'brian d foy <bdfoy@cpan.org>',
@@ -17,10 +17,6 @@ WriteMakefile(
 		no_index => {
 			directory => [qw(t inc examples)],
 			}
-		},
-		
-	'PM'            => {
-		'lib/Cpan.pm'     => '$(INST_LIBDIR)/Cpan.pm',
 		},
 		
 	'PREREQ_PM' => {
