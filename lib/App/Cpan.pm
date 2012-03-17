@@ -892,7 +892,7 @@ sub _load_local_lib # -I
 
 	my $rc = eval { require local::lib; 1; };
 	unless( $rc ) {
-		$logger->warn( "Could not load local::lib" );
+		$logger->die( "Could not load local::lib" );
 		}
 
 	local::lib->import;
