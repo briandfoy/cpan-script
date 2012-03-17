@@ -1,7 +1,6 @@
-# $Id$
 use ExtUtils::MakeMaker;
 
-require 5.008;
+require 5.010;
 
 eval "use Test::Manifest 1.21";
 
@@ -28,9 +27,6 @@ WriteMakefile(
 		'Test::More' => '0',
 		'CPAN'       => '1.9301',
 		},
-
-	'MAN1PODS'       => {},
-	'MAN3PODS'       => {},
 
 	clean => { FILES => '*.bak App-* cpan-* cover_db' },
 	);
