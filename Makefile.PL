@@ -1,6 +1,6 @@
 use ExtUtils::MakeMaker;
 
-require 5.010;
+require v5.10.1;
 
 eval "use Test::Manifest 1.21";
 

@@ -1,9 +1,12 @@
 package App::Cpan;
+
+use v5.10.1;
+
 use strict;
 use warnings;
 use vars qw($VERSION);
 
-$VERSION = '1.58';
+$VERSION = '1.58_01';
 
 =head1 NAME
 
