@@ -1,6 +1,6 @@
 Changes
 examples/MyCPANConfig.pm
-lib/Cpan.pm
+lib/App/Cpan.pm
 Makefile.PL
 MANIFEST
 script/cpan
