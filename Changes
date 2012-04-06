@@ -1,5 +1,8 @@
 1.57_01 - Tue Mar  1 10:41:55 CST 2011
 
+1.58_02 - Thu Apr  5 20:56:12 2012
+	Bump to next dev version
+
 1.58_01 - Thu Apr  5 20:53:39 2012
 	* Try to fix https://rt.cpan.org/Public/Bug/Display.html?id=76004
 	the be_silent option is disappearing, but I still want to
