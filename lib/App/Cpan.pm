@@ -357,8 +357,9 @@ sub _process_setup_options
 	else
 		{
 		# this is what CPAN.pm would do otherwise
+		local $CPAN::Be_Silent = 1;
 		CPAN::HandleConfig->load(
-			be_silent  => 1,
+			# be_silent  => 1, deprecated
 			write_file => 0,
 			);
 		}
