@@ -1,7 +1,6 @@
 package App::Cpan;
 
-use v5.10.1;
-
+use 5.006;
 use strict;
 use warnings;
 use vars qw($VERSION);
