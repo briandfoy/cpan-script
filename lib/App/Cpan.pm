@@ -449,7 +449,8 @@ sub run
 	}
 
 {
-package Local::Null::Logger;
+package
+  Local::Null::Logger; # hide from PAUSE
 
 sub new { bless \ my $x, $_[0] }
 sub AUTOLOAD { 1 }
@@ -1274,8 +1275,10 @@ sub _eval_version
 	{
 	my( $line, $sigil, $var ) = @_;
 
+        # split package line to hide from PAUSE
 	my $eval = qq{
-		package ExtUtils::MakeMaker::_version;
+		package
+                  ExtUtils::MakeMaker::_version;
 
 		local $sigil$var;
 		\$$var=undef; do {
