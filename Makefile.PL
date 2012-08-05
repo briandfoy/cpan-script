@@ -20,7 +20,7 @@ WriteMakefile(
 		},
 		
 	'PREREQ_PM' => {
-		'Test::More' => '0',
+		'Test::More' => '0.95',
 		'CPAN'       => '1.9301',
 		},
 

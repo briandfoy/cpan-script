@@ -6,3 +6,4 @@ install_hack.t
 process_options.t
 return_values.t
 cpanpm_output_hook.t
+expand_filenames.t
