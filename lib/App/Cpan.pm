@@ -756,11 +756,12 @@ Stolen from File::Path::Expand
 
 sub _expand_filename
 	{
-    my( $path )= @_;
-    print STDERR "\tExpanding $path\n";
+    my( $path ) = @_;
+    no warnings 'uninitialized';
+    $logger->debug( "Expanding path $path\n" );
     $path =~ s{\A~([^/]+)?}{
-		_home_of( $1 || $> ) || ${^MATCH}
-    	}pe;
+		_home_of( $1 || $> ) || "~$1"
+    	}e;
     return $path;
 	}
 
