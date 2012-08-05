@@ -1,6 +1,6 @@
 #!/usr/local/bin/perl
 
-use v5.10.1;
+use 5.008;
 use strict;
 use vars qw($VERSION);
 
