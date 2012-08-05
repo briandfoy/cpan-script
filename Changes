@@ -1,12 +1,12 @@
-1.57_01 - Tue Mar  1 10:41:55 CST 2011
+1.59_01  - Thu Apr 26 10:19:09
+	* Hide some internal packages from PAUSE indexing
 
-1.58_02 - Thu Apr  5 20:56:12 2012
-	Bump to next dev version
+1.59    - Thu Apr 26 10:00:29 2012
+	* Lower Perl prereq back to v5.6 at the request of Andreas König
 
-1.58_01 - Thu Apr  5 20:53:39 2012
 	* Try to fix https://rt.cpan.org/Public/Bug/Display.html?id=76004
 	the be_silent option is disappearing, but I still want to
-	suppress the config loading messages. I'll try a local 
+	suppress the config loading messages. I'll try a local
 	variable instead.
 
 1.58_01 - Fri Mar 16 22:32:13 2012

@@ -1,11 +1,11 @@
 #!/usr/local/bin/perl
 
-use 5.008;
+use 5.006;
 use strict;
 use vars qw($VERSION);
 
 use App::Cpan;
-$VERSION = '1.58_02';
+$VERSION = '1.5901';
 
 my $rc = App::Cpan->run( @ARGV );
 
