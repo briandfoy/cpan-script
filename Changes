@@ -1,6 +1,9 @@
 
+1.60_01 - Wed Jan 23 01:22:57 CST 2013
+	* Get back on track to make a proper release
+
 1.59_02 - Sun Aug  5 14:07:33 2012
-	Regress to 5.6, for real this time
+	* Regress to 5.6, for real this time
 
 1.59_01  - Thu Apr 26 10:19:09
 	* Hide some internal packages from PAUSE indexing
