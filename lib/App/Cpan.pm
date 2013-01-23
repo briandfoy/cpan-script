@@ -1,11 +1,11 @@
 package App::Cpan;
 
-use 5.006;
+use 5.008;
 use strict;
 use warnings;
 use vars qw($VERSION);
 
-$VERSION = '1.59_02';
+$VERSION = '1.60_01';
 
 =head1 NAME
 
@@ -1382,7 +1382,7 @@ brian d foy, C<< <bdfoy@cpan.org> >>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2001-2009, brian d foy, All Rights Reserved.
+Copyright (c) 2001-2013, brian d foy, All Rights Reserved.
 
 You may redistribute this under the same terms as Perl itself.
 
