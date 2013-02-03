@@ -1368,13 +1368,15 @@ This code is in Github:
 
 =head1 CREDITS
 
-Japheth Cleaver added the bits to allow a forced install (-f).
+Japheth Cleaver added the bits to allow a forced install (C<-f>).
 
 Jim Brandt suggest and provided the initial implementation for the
 up-to-date and Changes features.
 
-Adam Kennedy pointed out that exit() causes problems on Windows
+Adam Kennedy pointed out that C<exit()> causes problems on Windows
 where this script ends up with a .bat extension
+
+David Golden helps integrate this into the C<CPAN.pm> repos.
 
 =head1 AUTHOR
 
