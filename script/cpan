@@ -3,8 +3,8 @@
 use strict;
 use vars qw($VERSION);
 
-use App::Cpan '1.60_01';
-$VERSION = '1.60_01';
+use App::Cpan '1.60_02';
+$VERSION = '1.61';
 
 my $rc = App::Cpan->run( @ARGV );
 
@@ -67,10 +67,7 @@ Show the F<Changes> files for the specified modules
 
 =item -D module [ module ... ]
 
-Show the module details. This prints one line for each out-of-date module
-(meaning, modules locally installed but have newer versions on CPAN).
-Each line has three columns: module name, local version, and CPAN
-version.
+Show the module details.
 
 =item -f
 
