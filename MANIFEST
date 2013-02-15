@@ -1,8 +1,11 @@
+'Can Mastering Perl get in on serialization? - brian.d.foy@gmail.com - Gmail.html'
 Changes
 examples/MyCPANConfig.pm
 lib/App/Cpan.pm
 Makefile.PL
 MANIFEST
+MYMETA.json
+MYMETA.yml
 script/cpan
 t/compile.t
 t/cpanpm_output_hook.t
