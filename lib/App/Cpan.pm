@@ -433,7 +433,7 @@ sub run
 
 		my( $sub, $takes_args, $description ) =
 			map { $Method_table{$option}[ $Method_table_index{$_} ] }
-			qw( code takes_args );
+			qw( code takes_args description );
 
 		unless( ref $sub eq ref sub {} )
 			{
