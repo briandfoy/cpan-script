@@ -1347,13 +1347,9 @@ correctly if Log4perl is not installed.
 * When I capture CPAN.pm output, I need to check for errors and
 report them to the user.
 
-* Support local::lib
-
 * Warnings switch
 
 * Check then exit
-
-* ping mirrors support
 
 * no test option
 
