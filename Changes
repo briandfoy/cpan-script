@@ -1,4 +1,8 @@
 
+1.61_02 - Thu Apr 18 17:14:12 2013
+	* Add the -M switch to support per-session mirror specification
+	* Fix RT #84617
+
 1.61 - Fri Feb 15 03:51:35 2013
 	* Bump to stable release
 
