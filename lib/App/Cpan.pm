@@ -5,7 +5,7 @@ use strict;
 use warnings;
 use vars qw($VERSION);
 
-$VERSION = '1.61_01';
+$VERSION = '1.61_02';
 
 =head1 NAME
 
@@ -137,6 +137,11 @@ List the modules by the specified authors.
 
 Make the specified modules.
 
+=item -M mirror1,mirror2,...
+
+A comma-separated list of mirrors to use for just this run. The C<-P>
+option can find them for you automatically.
+
 =item -n
 
 Do a dry run, but don't actually install anything. (unimplemented)
@@ -248,7 +253,7 @@ BEGIN { # most of this should be in methods
 use vars qw( @META_OPTIONS $Default %CPAN_METHODS @CPAN_OPTIONS  @option_order
 	%Method_table %Method_table_index );
 
-@META_OPTIONS = qw( h v V I g G C A D O l L a r p P j: J w T);
+@META_OPTIONS = qw( h v V I g G M: C A D O l L a r p P j: J w T);
 
 $Default = 'default';
 
@@ -286,6 +291,7 @@ sub GOOD_EXIT () { 0 }
 	J =>  [ \&_dump_config,       NO_ARGS, GOOD_EXIT, 'Dump configuration to stdout' ],
 	F =>  [ \&_lock_lobotomy,     NO_ARGS, GOOD_EXIT, 'Turn off CPAN.pm lock files'  ],
 	I =>  [ \&_load_local_lib,    NO_ARGS, GOOD_EXIT, 'Loading local::lib'           ],
+	M =>  [ \&_use_these_mirrors,    ARGS, GOOD_EXIT, 'Setting per session mirrors'  ],
 	P =>  [ \&_find_good_mirrors, NO_ARGS, GOOD_EXIT, 'Finding good mirrors'         ],
     w =>  [ \&_turn_on_warnings,  NO_ARGS, GOOD_EXIT, 'Turning on warnings'          ],
     T =>  [ \&_turn_off_testing,  NO_ARGS, GOOD_EXIT, 'Turning off testing'          ],
@@ -367,7 +373,7 @@ sub _process_setup_options
 			);
 		}
 
-	foreach my $o ( qw(F I w T P) )
+	foreach my $o ( qw(F I w T P M) )
 		{
 		next unless exists $options->{$o};
 		$Method_table{$o}[ $Method_table_index{code} ]->( $options->{$o} );
@@ -908,6 +914,19 @@ sub _load_local_lib # -I
 	return HEY_IT_WORKED;
 	}
 
+sub _use_these_mirrors # -M
+	{
+	$logger->debug( "Setting per session mirrors" );
+	unless( $_[0] ) {
+		$logger->die( "The -M switch requires a comma-separated list of mirrors" );
+		}
+
+	$CPAN::Config->{urllist} = [ split /,/, $_[0] ];
+
+	$logger->debug( "Mirrors are @{$CPAN::Config->{urllist}}" );
+
+	}
+
 sub _create_autobundle
 	{
 	$logger->info(
@@ -1305,7 +1324,7 @@ sub _eval_version
 sub _path_to_module
 	{
 	my( $inc, $path ) = @_;
-	return if length $path< length $inc;
+	return if length $path < length $inc;
 
 	my $module_path = substr( $path, length $inc );
 	$module_path =~ s/\.pm\z//;
