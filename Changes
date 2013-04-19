@@ -1,4 +1,7 @@
 
+1.61_03 - Fri Apr 19 11:43:12 2013
+	* Return non zero if a module fails to install
+
 1.61_02 - Thu Apr 18 17:14:12 2013
 	* Add the -M switch to support per-session mirror specification
 	* Fix RT #84617
