@@ -529,17 +529,22 @@ sub _default
 		};
 
 	# How do I handle exit codes for multiple arguments?
-	my $errors = 0;
+	my @errors = ();
 
 	foreach my $arg ( @$args )
 		{
 		_clear_cpanpm_output();
 		$action->( $arg );
 
-		$errors += defined _cpanpm_output_indicates_failure();
+		my $error = _cpanpm_output_indicates_failure();
+		push @errors, $error if $error;
 		}
 
-	$errors ? I_DONT_KNOW_WHAT_HAPPENED : HEY_IT_WORKED;
+	return do {
+		if( @errors ) { $errors[0] }
+		else { HEY_IT_WORKED }
+		};
+
 	}
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -581,11 +586,20 @@ sub _clear_cpanpm_output { $scalar = '' }
 
 sub _get_cpanpm_output   { $scalar }
 
+# These are lines I don't care about in CPAN.pm output. If I can
+# filter out the informational noise, I have a better chance to
+# catch the error signal
 my @skip_lines = (
 	qr/^\QWarning \(usually harmless\)/,
 	qr/\bwill not store persistent state\b/,
 	qr(//hint//),
 	qr/^\s+reports\s+/,
+	qr/^Try the command/,
+	qr/^\s+$/,
+	qr/^to find objects/,
+	qr/^\s*Database was generated on/,
+	qr/^Going to read/,
+	qr|^\s+i\s+/|,    # the i /Foo::Whatever/ line when it doesn't know
 	);
 
 sub _get_cpanpm_last_line
@@ -616,13 +630,16 @@ sub _get_cpanpm_last_line
 
 BEGIN {
 my $epic_fail_words = join '|',
-	qw( Error stop(?:ping)? problems force not unsupported fail(?:ed)? );
+	qw( Error stop(?:ping)? problems force not unsupported
+		fail(?:ed)? Cannot\s+install );
 
 sub _cpanpm_output_indicates_failure
 	{
 	my $last_line = _get_cpanpm_last_line();
 
 	my $result = $last_line =~ /\b(?:$epic_fail_words)\b/i;
+	return A_MODULE_FAILED_TO_INSTALL if $last_line =~ /\b(?:Cannot\s+install)\b/i;
+
 	$result || ();
 	}
 }
