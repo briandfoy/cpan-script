@@ -254,7 +254,7 @@ comes directly from CPAN.pm.
 
 This code is in Github:
 
-	git://github.com/briandfoy/cpan_script.git
+	git://github.com/briandfoy/cpan-script.git
 
 =head1 CREDITS
 
