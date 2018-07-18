@@ -60,7 +60,7 @@ brian d foy, C<< <bdfoy@cpan.org> >>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (c) 2008, brian d foy, All Rights Reserved.
+Copyright (c) 2008-2018, brian d foy, All Rights Reserved.
 
 You may redistribute this under the terms as the Artistic License 2.0.
 
