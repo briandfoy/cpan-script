@@ -1,5 +1,7 @@
 use Test::More tests => 1;
 
+fail( "This is a dead repo. See https://github.com/andk/cpanpm for the latest work" );
+
 my $file = 'blib/script/cpan';
 
 print "bail out! Script file is missing!" unless -e $file;
