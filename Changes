@@ -1,3 +1,5 @@
+THIS IS A DEAD REPO. THIS PROJECT LIVES IN https://github.com/andk/cpanpm
+AND ALL IMPROVEMENTS HAVE HAPPENED THERE.
 
 1.61_03 - Fri Apr 19 11:43:12 2013
 	* Return non zero if a module fails to install
