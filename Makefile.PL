@@ -12,7 +12,7 @@ WriteMakefile(
 	'NAME'		    => 'App::Cpan',
 	'VERSION_FROM'  => 'lib/App/Cpan.pm',
 	'ABSTRACT'      => 'Interact with CPAN from the command line',
-	'LICENSE'       => 'perl',
+	'LICENSE'       => 'artistic_2',
 	'AUTHOR'        => 'brian d foy <bdfoy@cpan.org>',
 
 	'EXE_FILES' =>  [ 'script/cpan' ],

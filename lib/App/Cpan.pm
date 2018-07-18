@@ -1428,6 +1428,6 @@ brian d foy, C<< <bdfoy@cpan.org> >>
 
 Copyright (c) 2001-2013, brian d foy, All Rights Reserved.
 
-You may redistribute this under the same terms as Perl itself.
+You may redistribute this under the terms as the Artistic License 2.o.
 
 =cut
