@@ -16,13 +16,13 @@ WriteMakefile(
 	'AUTHOR'        => 'brian d foy <bdfoy@cpan.org>',
 
 	'EXE_FILES' =>  [ 'script/cpan' ],
-	 
+
 	'META_MERGE'    => {
 		no_index => {
 			directory => [qw(t inc examples)],
 			}
 		},
-		
+
 	'PREREQ_PM' => {
 		'Test::More' => '0.95',
 		'CPAN'       => '1.9301',
