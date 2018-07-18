@@ -4,6 +4,10 @@ require 5.008;
 
 eval "use Test::Manifest 1.21";
 
+# if you want to install this you have to find and remove this message
+# You probably want https://github.com/andk/cpanpm
+die "The latest version of App::cpan is in the CPAN.pm distribution: https://github.com/andk/cpanpm";
+
 WriteMakefile(
 	'NAME'		    => 'App::Cpan',
 	'VERSION_FROM'  => 'lib/App/Cpan.pm',
