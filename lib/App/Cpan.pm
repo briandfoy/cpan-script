@@ -3,9 +3,8 @@ package App::Cpan;
 use 5.008;
 use strict;
 use warnings;
-use vars qw($VERSION);
 
-$VERSION = '1.61_03';
+our $VERSION = '1.61_03';
 
 # if you want to install this you have to find and remove this message
 # You probably want https://github.com/andk/cpanpm

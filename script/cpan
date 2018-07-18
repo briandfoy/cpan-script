@@ -1,10 +1,9 @@
 #!/usr/local/bin/perl
 
 use strict;
-use vars qw($VERSION);
 
 use App::Cpan '1.61_02';
-$VERSION = '1.61_02';
+our $VERSION = '1.61_02';
 
 # if you want to install this you have to find and remove this message
 # You probably want https://github.com/andk/cpanpm
