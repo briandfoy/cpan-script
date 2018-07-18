@@ -37,9 +37,9 @@ AND ALL IMPROVEMENTS HAVE HAPPENED THERE.
 
 	* -I option for loading local::lib
 	* -V show extended details and check setup
-	
+
 	Some things only half way there:
-	
+
 	* -T disable testing (how am I going to do that?)
 	* -p ping the configured mirrors
 	* -P find the best mirrors
@@ -47,7 +47,7 @@ AND ALL IMPROVEMENTS HAVE HAPPENED THERE.
 
 	* -o option to set CPAN config options on the command line
 
-1.57 - 
+1.57 -
 	* Release for Perl 5.12
 
 1.56_15 - Thu Nov 12 17:39:18 2009
@@ -63,11 +63,11 @@ AND ALL IMPROVEMENTS HAVE HAPPENED THERE.
 	* The cpan(1) client now exits with a non-zero value if it thinks
 	there were errors in the operation. I haven't tracked down every
 	spot where there can be errors from CPAN.pm though, so there might
-	be some cases where it still exits with 0 even though things 
+	be some cases where it still exits with 0 even though things
 	failed.
-	* There is initial support for Log4perl, although you can't 
+	* There is initial support for Log4perl, although you can't
 	configure it yet. If you have Log4perl, cpan(1) uses it to print
-	to the screen. If you don't have Log4perl, it uses a minimal 
+	to the screen. If you don't have Log4perl, it uses a minimal
 	internal logger to do the same thing.
 
 1.54 - Sun Apr  6 15:53:26 2008
@@ -82,7 +82,7 @@ AND ALL IMPROVEMENTS HAVE HAPPENED THERE.
 
 1.52 - Thu Jan 26 02:13:05 2006
 	* Took out an exit() that caused Windows users some problems.
-	* If you aren't experiencing oddities, you don't need to 
+	* If you aren't experiencing oddities, you don't need to
 	upgrade
 	* I changed the distro name to cpan-script to distinguish this
 	from the CPAN module
