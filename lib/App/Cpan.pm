@@ -1406,7 +1406,12 @@ comes directly from CPAN.pm.
 
 This code is in Github:
 
-	git://github.com/briandfoy/cpan_script.git
+	https://github.com/briandfoy/cpan-script
+
+This project was subsumed by the CPAN.pm repo and the latest versions
+are there:
+
+	https://github.com/andk/cpanpm
 
 =head1 CREDITS
 
